@@ -112,9 +112,23 @@ function login() {
     }
     
     // Join school or get existing user (email is optional for existing users)
-    const result = joinSchool(schoolCode, username, subject, yearGroup, email);
-    if (!result.success) {
-        alert(result.error || 'Failed to join school');
+    let result;
+    try {
+        result = joinSchool(schoolCode, username, subject, yearGroup, email);
+        if (!result.success) {
+            alert(result.error || 'Failed to join school');
+            return;
+        }
+    } catch (e) {
+        console.error('Error joining school:', e);
+        alert('Error: ' + (e.message || 'Failed to join school. Please try again.'));
+        return;
+    }
+    
+    // Get school again to ensure we have the latest data
+    const school = getSchool(schoolCode);
+    if (!school) {
+        alert('Error: School not found after joining');
         return;
     }
     
@@ -133,7 +147,7 @@ function login() {
     localStorage.setItem('currentYearGroup', yearGroup);
     
     // Get user data from school
-    const userData = school.users[username];
+    const userData = school.users[username] || result.user;
     
     // Restore teams with their total scores
     if (userData.teams && userData.teams.length > 0) {
