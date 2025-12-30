@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taboo Game</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+* { box-sizing: border-box; }
+@keyframes float {
+0%, 100% { transform: translateY(0px); }
+50% { transform: translateY(-8px); }
+}
+@keyframes slideIn {
+from {
+transform: translateX(-100%) rotate(-10deg);
+opacity: 0;
+}
+to {
+transform: translateX(0) rotate(0deg);
+opacity: 1;
+}
+}
+@keyframes pulse {
+0%, 100% { transform: scale(1); }
+50% { transform: scale(1.1); }
+}
+@keyframes confetti {
+0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+100% { transform: translateY(100px) rotate(360deg); opacity: 0; }
+}
+.card-float {
+animation: float 3s ease-in-out infinite;
+}
+.card-enter {
+animation: slideIn 0.5s ease-out;
+}
+.score-pulse {
+animation: pulse 0.4s ease-in-out;
+}
+.confetti-piece {
+position: fixed;
+width: 8px;
+height: 8px;
+pointer-events: none;
+animation: confetti 1s ease-out forwards;
+}
+.card-container {
+perspective: 1000px;
+min-height: 350px;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+</style>
+</head>
+<body class="bg-gradient-to-br from-indigo-600 to-purple-700 min-h-screen">
+<div id="app"></div>
+<script>
+// Game Data
+const INSTRUMENTS = [
+{ id: 1, title: 'Violin', family: 'Strings', hint: 'Bow across strings', taboo: ['bow', 'strings', 'small', 'high', 'fiddle'] },
+{ id: 2, title: 'Guitar', family: 'Strings', hint: 'Pluck or strum', taboo: ['strings', 'rock', 'pick', 'six', 'neck'] },
+{ id: 3, title: 'Cello', family: 'Strings', hint: 'Large bowed strings', taboo: ['bow', 'strings', 'big', 'sit', 'deep'] },
+{ id: 4, title: 'Harp', family: 'Strings', hint: 'Pluck vertical strings', taboo: ['strings', 'pluck', 'angel', 'gold', 'tall'] },
+{ id: 5, title: 'Ukulele', family: 'Strings', hint: 'Small Hawaiian strings', taboo: ['small', 'Hawaii', 'four', 'beach', 'tiny'] },
+{ id: 6, title: 'Banjo', family: 'Strings', hint: 'Pluck round body', taboo: ['country', 'round', 'five', 'twang', 'folk'] },
+{ id: 7, title: 'Mandolin', family: 'Strings', hint: 'Small plucked strings', taboo: ['small', 'eight', 'pick', 'pear', 'folk'] },
+{ id: 8, title: 'Sitar', family: 'Strings', hint: 'Indian plucked strings', taboo: ['India', 'many', 'long', 'neck', 'meditation'] },
+{ id: 9, title: 'Lute', family: 'Strings', hint: 'Renaissance plucked', taboo: ['medieval', 'pear', 'old', 'ancient', 'Renaissance'] },
+{ id: 10, title: 'Koto', family: 'Strings', hint: 'Japanese floor strings', taboo: ['Japan', 'floor', 'thirteen', 'picks', 'Asian'] },
+{ id: 11, title: 'Trumpet', family: 'Brass', hint: 'Buzz lips and valves', taboo: ['buzz', 'three', 'jazz', 'loud', 'shiny'] },
+{ id: 12, title: 'Trombone', family: 'Brass', hint: 'Slide and buzz', taboo: ['slide', 'arm', 'long', 'low', 'slide'] },
+{ id: 13, title: 'French Horn', family: 'Brass', hint: 'Coiled tube with hand', taboo: ['circular', 'coiled', 'hand', 'orchestra', 'round'] },
+{ id: 14, title: 'Tuba', family: 'Brass', hint: 'Largest brass', taboo: ['huge', 'biggest', 'low', 'deep', 'heavy'] },
+{ id: 15, title: 'Cornet', family: 'Brass', hint: 'Valved brass', taboo: ['trumpet', 'short', 'small', 'band', 'brass'] },
+{ id: 16, title: 'Bugle', family: 'Brass', hint: 'Brass without valves', taboo: ['army', 'military', 'calls', 'simple', 'wake'] },
+{ id: 17, title: 'Euphonium', family: 'Brass', hint: 'Smooth brass', taboo: ['tuba', 'valves', 'band', 'smooth', 'medium'] },
+{ id: 18, title: 'Flute', family: 'Woodwind', hint: 'Blow across hole', taboo: ['blow', 'silver', 'holes', 'high', 'sideways'] },
+{ id: 19, title: 'Clarinet', family: 'Woodwind', hint: 'Single reed wood', taboo: ['reed', 'black', 'squeeze', 'jazz', 'single'] },
+{ id: 20, title: 'Saxophone', family: 'Woodwind', hint: 'Curved reed wood', taboo: ['jazz', 'reed', 'curved', 'golden', 'cool'] },
+{ id: 21, title: 'Oboe', family: 'Woodwind', hint: 'Double reed wood', taboo: ['double', 'two', 'duck', 'tune', 'skinny'] },
+{ id: 22, title: 'Bassoon', family: 'Woodwind', hint: 'Large double reed', taboo: ['double', 'two', 'long', 'low', 'folded'] },
+{ id: 23, title: 'Piccolo', family: 'Woodwind', hint: 'Tiny flute', taboo: ['tiny', 'baby', 'high', 'shrill', 'small'] },
+{ id: 24, title: 'Recorder', family: 'Woodwind', hint: 'Simple wind wood', taboo: ['school', 'plastic', 'easy', 'beginner', 'simple'] },
+{ id: 25, title: 'Harmonica', family: 'Woodwind', hint: 'Pocket wind', taboo: ['blues', 'pocket', 'small', 'reeds', 'suck'] },
+{ id: 26, title: 'Drums', family: 'Percussion', hint: 'Hit with sticks', taboo: ['sticks', 'beat', 'rhythm', 'bang', 'kit'] },
+{ id: 27, title: 'Timpani', family: 'Percussion', hint: 'Kettle drums', taboo: ['kettle', 'mallets', 'tuned', 'pedal', 'orchestra'] },
+{ id: 28, title: 'Xylophone', family: 'Percussion', hint: 'Wooden bars', taboo: ['wood', 'bars', 'rainbow', 'tuned', 'mallets'] },
+{ id: 29, title: 'Maracas', family: 'Percussion', hint: 'Shaker pair', taboo: ['shake', 'rattle', 'pair', 'seeds', 'egg'] },
+{ id: 30, title: 'Triangle', family: 'Percussion', hint: 'Metal three sides', taboo: ['three', 'ding', 'stick', 'shape', 'metal'] },
+{ id: 31, title: 'Cymbals', family: 'Percussion', hint: 'Crash plates', taboo: ['crash', 'metal', 'loud', 'two', 'plates'] },
+{ id: 32, title: 'Tambourine', family: 'Percussion', hint: 'Shake and ring', taboo: ['shake', 'jingles', 'circle', 'hand', 'ring'] },
+{ id: 33, title: 'Bongos', family: 'Percussion', hint: 'Hand drums pair', taboo: ['two', 'hands', 'small', 'pair', 'Latin'] },
+{ id: 34, title: 'Congas', family: 'Percussion', hint: 'Tall hand drums', taboo: ['tall', 'hands', 'stand', 'Latin', 'slap'] },
+{ id: 35, title: 'Snare Drum', family: 'Percussion', hint: 'Wire drum', taboo: ['sticks', 'wires', 'rattle', 'march', 'roll'] },
+{ id: 36, title: 'Bass Drum', family: 'Percussion', hint: 'Huge low drum', taboo: ['huge', 'boom', 'low', 'kick', 'deep'] },
+{ id: 37, title: 'Glockenspiel', family: 'Percussion', hint: 'Metal bars', taboo: ['metal', 'bars', 'high', 'bells', 'mallets'] },
+{ id: 38, title: 'Castanets', family: 'Percussion', hint: 'Spanish clickers', taboo: ['click', 'Spanish', 'dance', 'wood', 'clack'] },
+{ id: 39, title: 'Cowbell', family: 'Percussion', hint: 'Farm bell', taboo: ['farm', 'metal', 'stick', 'clang', 'cow'] },
+{ id: 40, title: 'Vibraphone', family: 'Percussion', hint: 'Vibrating metal bars', taboo: ['bars', 'motor', 'jazz', 'fans', 'vibrato'] },
+{ id: 41, title: 'Piano', family: 'Keyboard', hint: 'Keys and hammers', taboo: ['keys', 'black', 'white', 'classical', 'grand'] },
+{ id: 42, title: 'Organ', family: 'Keyboard', hint: 'Church keyboard', taboo: ['church', 'keys', 'pipes', 'pedals', 'large'] },
+{ id: 43, title: 'Synthesizer', family: 'Keyboard', hint: 'Electronic keys', taboo: ['electronic', 'keys', 'sounds', 'digital', 'modern'] },
+{ id: 44, title: 'Harpsichord', family: 'Keyboard', hint: 'Baroque pluck', taboo: ['keys', 'pluck', 'baroque', 'old', 'strings'] },
+{ id: 45, title: 'Accordion', family: 'Keyboard', hint: 'Squeeze bellows', taboo: ['squeeze', 'bellows', 'keys', 'folk', 'buttons'] },
+];
+// Game State
+let state = {
+phase: 'setup',
+team1: { name: 'Team 1', score: 0, skipped: 0 },
+team2: { name: 'Team 2', score: 0, skipped: 0 },
+currentTeam: 1,
+currentCard: null,
+remaining: [],
+history: []
+};
+// Shuffle array
+function shuffle(arr) {
+const copy = [...arr];
+for (let i = copy.length - 1; i > 0; i--) {
+const j = Math.floor(Math.random() * (i + 1));
+[copy[i], copy[j]] = [copy[j], copy[i]];
+}
+return copy;
+}
+// Confetti
+function makeConfetti() {
+const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+for (let i = 0; i < 25; i++) {
+const el = document.createElement('div');
+el.className = 'confetti-piece';
+el.style.left = Math.random() * 100 + '%';
+el.style.top = '-10px';
+el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+el.style.animationDelay = (Math.random() * 0.2) + 's';
+document.body.appendChild(el);
+setTimeout(() => el.remove(), 1300);
+}
+}
+// Game Logic
+function startGame(t1, t2) {
+state.phase = 'playing';
+state.team1.name = t1 || 'Team 1';
+state.team2.name = t2 || 'Team 2';
+state.remaining = shuffle(INSTRUMENTS);
+drawCard();
+render();
+}
+function drawCard() {
+if (state.remaining.length === 0) {
+state.phase = 'over';
+render();
+return;
+}
+state.currentCard = state.remaining.shift();
+render();
+}
+function correct() {
+const team = state.currentTeam === 1 ? state.team1 : state.team2;
+team.score++;
+state.history.push({
+team: state.currentTeam,
+card: state.currentCard,
+result: 'correct'
+});
+makeConfetti();
+setTimeout(() => {
+state.currentTeam = state.currentTeam === 1 ? 2 : 1;
+drawCard();
+}, 600);
+}
+function skip() {
+const team = state.currentTeam === 1 ? state.team1 : state.team2;
+team.skipped++;
+state.history.push({
+team: state.currentTeam,
+card: state.currentCard,
+result: 'skip'
+});
+state.currentTeam = state.currentTeam === 1 ? 2 : 1;
+drawCard();
+}
+function reset() {
+state = {
+phase: 'setup',
+team1: { name: 'Team 1', score: 0, skipped: 0 },
+team2: { name: 'Team 2', score: 0, skipped: 0 },
+currentTeam: 1,
+currentCard: null,
+remaining: [],
+history: []
+};
+render();
+}
+// Render
+function render() {
+const app = document.getElementById('app');
+if (state.phase === 'setup') {
+app.innerHTML = `
+<div class="flex items-center justify-center min-h-screen px-4">
+<div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center card-float">
+<h1 class="text-5xl font-bold text-gray-800 mb-2">🎵 Taboo</h1>
+<p class="text-gray-600 mb-8">Enter team names to begin</p>
+<div class="space-y-4 mb-8">
+<div>
+<label class="block text-sm font-bold text-green-600 mb-2">Team 1</label>
+<input id="t1" type="text" placeholder="Team 1" class="w-full px-4 py-3 border-2 border-green-400 rounded-lg focus:outline-none">
+</div>
+<div>
+<label class="block text-sm font-bold text-amber-600 mb-2">Team 2</label>
+<input id="t2" type="text" placeholder="Team 2" class="w-full px-4 py-3 border-2 border-amber-400 rounded-lg focus:outline-none">
+</div>
+</div>
+<button onclick="startGame(document.getElementById('t1').value, document.getElementById('t2').value)" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 text-lg">
+Start Game
+</button>
+</div>
+</div>
+`;
+} else if (state.phase === 'over') {
+const winner = state.team1.score > state.team2.score ? state.team1.name : state.team2.score > state.team1.score ? state.team2.name : 'Tie';
+app.innerHTML = `
+<div class="flex items-center justify-center min-h-screen px-4">
+<div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center">
+<h1 class="text-5xl font-bold text-gray-800 mb-4">Game Over</h1>
+<p class="text-3xl font-bold text-indigo-600 mb-8">${winner} Wins</p>
+<div class="grid grid-cols-2 gap-4 mb-8">
+<div class="bg-green-50 rounded-lg p-4">
+<p class="text-gray-700 font-bold">${state.team1.name}</p>
+<p class="text-4xl font-bold text-green-600">${state.team1.score}</p>
+<p class="text-xs text-gray-600">Skip: ${state.team1.skipped}</p>
+</div>
+<div class="bg-amber-50 rounded-lg p-4">
+<p class="text-gray-700 font-bold">${state.team2.name}</p>
+<p class="text-4xl font-bold text-amber-600">${state.team2.score}</p>
+<p class="text-xs text-gray-600">Skip: ${state.team2.skipped}</p>
+</div>
+</div>
+<button onclick="reset()" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 text-lg">
+Play Again
+</button>
+</div>
+</div>
+`;
+} else {
+const team = state.currentTeam === 1 ? state.team1 : state.team2;
+const color = state.currentTeam === 1 ? 'from-green-400 to-green-600' : 'from-amber-400 to-amber-600';
+app.innerHTML = `
+<div class="min-h-screen p-4 md:p-8">
+<div class="max-w-2xl mx-auto">
+<div class="text-center mb-6">
+<h1 class="text-4xl font-bold text-white mb-2">Taboo Game</h1>
+<p class="text-white opacity-80">Cards: ${state.remaining.length + 1}</p>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-8">
+<div class="bg-gradient-to-br from-green-400 to-green-600 rounded-lg p-6 text-white transform transition ${state.currentTeam === 1 ? 'scale-105' : 'opacity-70'}">
+<p class="text-sm opacity-90">${state.team1.name}</p>
+<p class="text-5xl font-bold">${state.team1.score}</p>
+<p class="text-xs opacity-80">Skip: ${state.team1.skipped}</p>
+</div>
+<div class="bg-gradient-to-br from-amber-400 to-amber-600 rounded-lg p-6 text-white transform transition ${state.currentTeam === 2 ? 'scale-105' : 'opacity-70'}">
+<p class="text-sm opacity-90">${state.team2.name}</p>
+<p class="text-5xl font-bold">${state.team2.score}</p>
+<p class="text-xs opacity-80">Skip: ${state.team2.skipped}</p>
+</div>
+</div>
+<div class="text-center mb-6">
+<div class="inline-block bg-white bg-opacity-20 text-white px-6 py-3 rounded-xl">
+<p class="font-bold text-lg">${team.name}'s Turn</p>
+</div>
+</div>
+<div class="card-container mb-8">
+${state.currentCard ? `
+<div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-8 text-center card-enter">
+<div class="mb-6">
+<h2 class="text-5xl font-bold text-gray-800">${state.currentCard.title}</h2>
+</div>
+<div class="bg-red-50 rounded-xl p-6 mb-6">
+<p class="text-red-700 font-bold mb-4">TABOO WORDS</p>
+<div class="flex flex-wrap gap-2 justify-center">
+${state.currentCard.taboo.map(w => ``).join('')}
+</div>
+</div>
+<p class="text-gray-600 text-sm italic">${state.currentCard.hint}</p>
+</div>
+` : `
+<div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-8 text-center">
+<p class="text-6xl mb-4">🎴</p>
+<p class="text-gray-600 font-semibold">Draw a card</p>
+</div>
+`}
+</div>
+<div class="flex gap-4 justify-center flex-wrap">
+${!state.currentCard ? `
+<button onclick="drawCard()" class="bg-indigo-600 text-white font-bold py-4 px-8 rounded-xl hover:bg-indigo-700 text-lg">
+Draw Card
+</button>
+` : `
+<button onclick="correct()" class="bg-green-500 text-white font-bold py-4 px-8 rounded-xl hover:bg-green-600 text-lg">
+Got It
+</button>
+<button onclick="skip()" class="bg-red-500 text-white font-bold py-4 px-8 rounded-xl hover:bg-red-600 text-lg">
+Skip
+</button>
+`}
+</div>
+</div>
+</div>
+`;
+}
+}
+render();
+</script>
+</body>
+</html>

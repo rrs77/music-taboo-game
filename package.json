@@ -1,0 +1,53 @@
+{
+  "name": "music-taboo-game",
+  "version": "1.0.0",
+  "description": "Music Taboo Game - Educational card game for learning music",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build-mac": "electron-builder --mac",
+    "build-win": "electron-builder --win",
+    "build-linux": "electron-builder --linux"
+  },
+  "keywords": [
+    "music",
+    "education",
+    "taboo",
+    "game"
+  ],
+  "author": "Music Taboo",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.musictaboo.app",
+    "productName": "Music Taboo",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "Taboo.html",
+      "styles.css",
+      "game-data.js",
+      "game-logic.js",
+      "app.js",
+      "main.js",
+      "preload.js",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.education",
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}
+
