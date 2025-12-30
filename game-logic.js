@@ -2,6 +2,18 @@
 // Save data to both localStorage (for browser) and JSON file (for persistence)
 const DATA_FILE_NAME = 'taboo-game-data.json';
 
+// Super Admin Configuration
+const SUPER_ADMIN_ACCOUNTS = [
+    {
+        email: 'rob.reichstorer@gmail.com',
+        password: 'sidwom-3xycje-wAsgoh'
+    },
+    {
+        email: 'admin',
+        password: 'admin2024' // Legacy admin password
+    }
+];
+
 // School Management Functions
 function getAllSchools() {
     const allData = getAllData();
@@ -35,7 +47,7 @@ function createSchool(schoolName, schoolCode, adminPassword) {
     return { success: true, school: allData.schools[schoolCode] };
 }
 
-function joinSchool(schoolCode, username, subject, yearGroup) {
+function joinSchool(schoolCode, username, subject, yearGroup, email) {
     const allData = getAllData();
     const school = getSchool(schoolCode);
     
@@ -47,8 +59,10 @@ function joinSchool(schoolCode, username, subject, yearGroup) {
     if (!school.users[username]) {
         school.users[username] = {
             username: username,
+            email: email || '',
             subject: subject || '',
             yearGroup: yearGroup || '',
+            password: '', // Will be set by admin or user
             joinedAt: new Date().toISOString(),
             teams: [
                 { name: 'Team 1', score: 0, skipped: 0, totalScore: 0 },
@@ -68,9 +82,97 @@ function joinSchool(schoolCode, username, subject, yearGroup) {
         }
         
         saveAllData(allData);
+    } else {
+        // Update email if provided and different
+        if (email && email !== school.users[username].email) {
+            school.users[username].email = email;
+            saveAllData(allData);
+        }
     }
     
     return { success: true, user: school.users[username] };
+}
+
+function resetUserPassword(schoolCode, username, newPassword, sendEmail) {
+    const allData = getAllData();
+    const school = getSchool(schoolCode);
+    
+    if (!school) {
+        return { success: false, error: 'School not found' };
+    }
+    
+    if (!school.users[username]) {
+        return { success: false, error: 'User not found' };
+    }
+    
+    const user = school.users[username];
+    const oldPassword = user.password || '';
+    user.password = newPassword;
+    user.passwordResetAt = new Date().toISOString();
+    user.passwordResetBy = 'admin';
+    
+    saveAllData(allData);
+    
+    // Send email if requested and email exists
+    if (sendEmail && user.email) {
+        sendPasswordResetEmail(user.email, username, newPassword, school.schoolName).catch(err => {
+            console.error('Failed to send password reset email:', err);
+        });
+    }
+    
+    return { success: true, user: user };
+}
+
+async function sendPasswordResetEmail(email, username, newPassword, schoolName) {
+    try {
+        // Try to send via Netlify Function or server endpoint
+        const response = await fetch('/.netlify/functions/send-email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                to: email,
+                subject: 'Password Reset - Music Taboo Game',
+                html: `
+                    <h2>Password Reset</h2>
+                    <p>Hello ${username},</p>
+                    <p>Your password for ${schoolName} on Music Taboo Game has been reset by an administrator.</p>
+                    <p><strong>Your new password is: ${newPassword}</strong></p>
+                    <p>Please log in and change this password to something you'll remember.</p>
+                    <p>If you did not request this password reset, please contact your administrator immediately.</p>
+                `,
+                text: `Hello ${username},\n\nYour password for ${schoolName} on Music Taboo Game has been reset by an administrator.\n\nYour new password is: ${newPassword}\n\nPlease log in and change this password to something you'll remember.\n\nIf you did not request this password reset, please contact your administrator immediately.`
+            })
+        });
+        
+        if (response.ok) {
+            console.log('Password reset email sent successfully');
+            return { success: true };
+        } else {
+            console.error('Failed to send email:', await response.text());
+            return { success: false, error: 'Email service unavailable' };
+        }
+    } catch (error) {
+        console.error('Error sending email:', error);
+        // Fallback: try PHP endpoint if Netlify Function doesn't exist
+        try {
+            const response = await fetch('send-email.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    to: email,
+                    subject: 'Password Reset - Music Taboo Game',
+                    message: `Hello ${username},\n\nYour password for ${schoolName} on Music Taboo Game has been reset by an administrator.\n\nYour new password is: ${newPassword}\n\nPlease log in and change this password to something you'll remember.`
+                })
+            });
+            return { success: response.ok };
+        } catch (e) {
+            return { success: false, error: e.message };
+        }
+    }
 }
 
 function getSchoolProgress(schoolCode) {
@@ -141,6 +243,91 @@ function getSchoolProgress(schoolCode) {
     return progress;
 }
 
+// Super Admin Functions
+function getAllSchoolsStats() {
+    const schools = getAllSchools();
+    const stats = {
+        totalSchools: Object.keys(schools).length,
+        totalUsers: 0,
+        totalGames: 0,
+        schools: [],
+        recentActivity: []
+    };
+    
+    Object.entries(schools).forEach(([code, school]) => {
+        const userCount = Object.keys(school.users || {}).length;
+        let gameCount = 0;
+        let lastActivity = null;
+        
+        // Count games and find last activity
+        Object.values(school.users || {}).forEach(user => {
+            if (user.gameHistory && user.gameHistory.length > 0) {
+                gameCount += user.gameHistory.length;
+                const lastGame = user.gameHistory[user.gameHistory.length - 1];
+                if (!lastActivity || new Date(lastGame.date) > new Date(lastActivity)) {
+                    lastActivity = lastGame.date;
+                }
+            }
+            if (user.joinedAt && (!lastActivity || new Date(user.joinedAt) > new Date(lastActivity))) {
+                lastActivity = user.joinedAt;
+            }
+        });
+        
+        stats.totalUsers += userCount;
+        stats.totalGames += gameCount;
+        
+        stats.schools.push({
+            code: code,
+            name: school.schoolName,
+            createdAt: school.createdAt,
+            userCount: userCount,
+            gameCount: gameCount,
+            lastActivity: lastActivity,
+            subjects: school.subjects || [],
+            yearGroups: school.yearGroups || []
+        });
+        
+        // Collect recent activity
+        Object.values(school.users || {}).forEach(user => {
+            if (user.gameHistory) {
+                user.gameHistory.slice(-3).forEach(game => {
+                    stats.recentActivity.push({
+                        schoolCode: code,
+                        schoolName: school.schoolName,
+                        username: user.username,
+                        date: game.date,
+                        gameSet: game.gameSetName || game.gameSet
+                    });
+                });
+            }
+        });
+    });
+    
+    // Sort schools by activity
+    stats.schools.sort((a, b) => {
+        if (b.lastActivity && a.lastActivity) {
+            return new Date(b.lastActivity) - new Date(a.lastActivity);
+        }
+        return b.gameCount - a.gameCount;
+    });
+    
+    // Sort recent activity
+    stats.recentActivity.sort((a, b) => new Date(b.date) - new Date(a.date));
+    stats.recentActivity = stats.recentActivity.slice(0, 20);
+    
+    return stats;
+}
+
+function verifySuperAdmin(email, password) {
+    if (!email || !password) return false;
+    
+    // Check if email/password combination exists
+    return SUPER_ADMIN_ACCOUNTS.some(account => 
+        account.email.toLowerCase() === email.toLowerCase() && 
+        account.password === password
+    );
+}
+
 // Initialize data loading on startup
 let dataFileLoaded = false;
 
@@ -153,7 +340,7 @@ async function loadDataFromFile() {
             const fileData = await window.electronAPI.readDataFile(DATA_FILE_NAME);
             if (fileData) {
                 const parsed = JSON.parse(fileData);
-                // Sync to localStorage as backup
+                // Sync to localStorage as cache
                 localStorage.setItem('tabooAllData', fileData);
                 dataFileLoaded = true;
                 return parsed;
@@ -170,7 +357,7 @@ async function loadDataFromFile() {
             const fileData = await response.text();
             if (fileData) {
                 const parsed = JSON.parse(fileData);
-                // Sync to localStorage as backup
+                // Sync to localStorage as cache
                 localStorage.setItem('tabooAllData', fileData);
                 dataFileLoaded = true;
                 return parsed;
@@ -198,10 +385,10 @@ function getAllData() {
 async function saveAllData(data) {
     const dataStr = JSON.stringify(data, null, 2);
     
-    // Save to localStorage first (always works, fast)
+    // Save to localStorage as cache (always works, fast)
     localStorage.setItem('tabooAllData', dataStr);
     
-    // Try to save to file on server (for web hosting)
+    // ALWAYS save to server first (for Netlify/web hosting)
     try {
         const response = await fetch('save-data.php', {
             method: 'POST',
@@ -214,31 +401,32 @@ async function saveAllData(data) {
         if (response.ok) {
             const result = await response.json();
             if (result.success) {
-                console.log('✅ Data saved to server file: taboo-game-data.json');
-                return;
+                console.log('✅ Data saved to server: taboo-game-data.json');
+                return; // Success - data saved to server
             }
+        } else {
+            console.warn('⚠️ Server save returned non-OK status:', response.status);
         }
     } catch (e) {
-        // Server save failed, try Electron or continue with localStorage only
-        console.log('Server save not available, trying Electron:', e);
+        console.error('❌ Server save failed:', e);
+        // Continue to fallback options
     }
     
-    // Also save to file if in Electron (for desktop app)
+    // Fallback: Save to file if in Electron (for desktop app only)
     if (window.electronAPI && window.electronAPI.writeDataFile) {
         try {
             const result = await window.electronAPI.writeDataFile(DATA_FILE_NAME, dataStr);
             if (result && result.success) {
-                console.log('✅ Data saved to file:', result.path || DATA_FILE_NAME);
-            } else {
-                console.warn('⚠️ File save returned:', result);
+                console.log('✅ Data saved to Electron file:', result.path || DATA_FILE_NAME);
+                return;
             }
         } catch (e) {
-            console.error('❌ Error saving to file:', e);
+            console.error('❌ Electron file save failed:', e);
         }
-    } else {
-        // Not in Electron and no server - data only in localStorage
-        console.log('💾 Data saved to localStorage (server file saving requires save-data.php on web host)');
     }
+    
+    // Final fallback: localStorage only (will sync to server on next save)
+    console.log('💾 Data saved to localStorage (will sync to server on next connection)');
 }
 
 // Load data from file on startup
@@ -416,11 +604,10 @@ function exportData() {
     URL.revokeObjectURL(url);
 }
 
-// Automatic Backup Function - saves to app folder
-let backupFileHandle = null;
-let backupDirectoryHandle = null;
+// Auto-backup functionality removed - all data now saves directly to server
 
-async function requestBackupFolderPermission() {
+// Removed backup functions - data saves directly to server
+async function requestBackupFolderPermission_DISABLED() {
     try {
         // Check if File System Access API is supported
         if (!('showDirectoryPicker' in window)) {
@@ -447,7 +634,7 @@ async function requestBackupFolderPermission() {
     }
 }
 
-async function autoBackup() {
+async function autoBackup_DISABLED() {
     try {
         const allData = getAllData();
         if (!allData || (Object.keys(allData.users || {}).length === 0 && Object.keys(allData.gameSets || {}).length === 0)) {
@@ -565,22 +752,9 @@ function fallbackDownload(dataStr, filename) {
 }
 
 // Check if backup is needed and perform it
-function checkAndBackup() {
-    const lastBackup = localStorage.getItem('lastAutoBackup');
-    const now = new Date();
-    
-    // Backup if:
-    // 1. Never backed up before, OR
-    // 2. Last backup was more than 1 hour ago
-    if (!lastBackup) {
-        autoBackup();
-    } else {
-        const lastBackupTime = new Date(lastBackup);
-        const hoursSinceBackup = (now - lastBackupTime) / (1000 * 60 * 60);
-        if (hoursSinceBackup >= 1) {
-            autoBackup();
-        }
-    }
+function checkAndBackup_DISABLED() {
+    // Auto-backup disabled - all data saves directly to server
+    return;
 }
 
 function importData(event) {
