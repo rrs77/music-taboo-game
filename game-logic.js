@@ -251,6 +251,7 @@ function getAllSchoolsStats() {
         totalUsers: 0,
         totalGames: 0,
         schools: [],
+        allUsers: [], // New: list of all users across all schools
         recentActivity: []
     };
     
@@ -259,8 +260,24 @@ function getAllSchoolsStats() {
         let gameCount = 0;
         let lastActivity = null;
         
-        // Count games and find last activity
+        // Count games and find last activity, and collect user details
         Object.values(school.users || {}).forEach(user => {
+            // Add user to allUsers list
+            stats.allUsers.push({
+                username: user.username,
+                email: user.email || '',
+                schoolCode: code,
+                schoolName: school.schoolName,
+                subject: user.subject || '',
+                yearGroup: user.yearGroup || '',
+                gamesPlayed: user.gameHistory ? user.gameHistory.length : 0,
+                joinedAt: user.joinedAt || '',
+                lastActivity: user.gameHistory && user.gameHistory.length > 0 
+                    ? user.gameHistory[user.gameHistory.length - 1].date 
+                    : user.joinedAt || null,
+                hasPassword: !!user.password
+            });
+            
             if (user.gameHistory && user.gameHistory.length > 0) {
                 gameCount += user.gameHistory.length;
                 const lastGame = user.gameHistory[user.gameHistory.length - 1];
@@ -309,6 +326,14 @@ function getAllSchoolsStats() {
             return new Date(b.lastActivity) - new Date(a.lastActivity);
         }
         return b.gameCount - a.gameCount;
+    });
+    
+    // Sort all users by school name, then username
+    stats.allUsers.sort((a, b) => {
+        if (a.schoolName !== b.schoolName) {
+            return a.schoolName.localeCompare(b.schoolName);
+        }
+        return a.username.localeCompare(b.username);
     });
     
     // Sort recent activity
@@ -375,11 +400,21 @@ function getAllData() {
     // Try localStorage first (fastest)
     const data = localStorage.getItem('tabooAllData');
     if (data) {
-        return JSON.parse(data);
+        try {
+            const parsed = JSON.parse(data);
+            // Ensure all required properties exist
+            if (!parsed.users) parsed.users = {};
+            if (!parsed.gameSets) parsed.gameSets = {};
+            if (!parsed.schools) parsed.schools = {};
+            return parsed;
+        } catch (e) {
+            console.error('Error parsing stored data:', e);
+            // Return empty structure if parse fails
+        }
     }
     
-    // If no localStorage data, return empty structure
-    return { users: {}, gameSets: {} };
+    // If no localStorage data, return empty structure with all required properties
+    return { users: {}, gameSets: {}, schools: {} };
 }
 
 async function saveAllData(data) {

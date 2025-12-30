@@ -22,22 +22,52 @@ let state = {
 
 // Load user data if logged in
 if (currentUsername) {
-    const userData = getUserData(currentUsername);
-    // Restore teams with their total scores
-    if (userData.teams && userData.teams.length > 0) {
-        state.teams = userData.teams.map(team => ({
-            name: team.name,
-            score: 0, // Reset current game score
-            skipped: 0, // Reset current game skipped
-            totalScore: userData.totalScore?.[team.name] || team.totalScore || 0
-        }));
-    } else {
+    try {
+        const schoolCode = localStorage.getItem('currentSchoolCode') || '';
+        let userData = null;
+        
+        // Try to get user from school first
+        if (schoolCode) {
+            const school = getSchool(schoolCode);
+            if (school && school.users && school.users[currentUsername]) {
+                userData = school.users[currentUsername];
+            }
+        }
+        
+        // Fallback to legacy user system
+        if (!userData) {
+            userData = getUserData(currentUsername);
+        }
+        
+        // Restore teams with their total scores
+        if (userData && userData.teams && userData.teams.length > 0) {
+            state.teams = userData.teams.map(team => ({
+                name: team.name,
+                score: 0, // Reset current game score
+                skipped: 0, // Reset current game skipped
+                totalScore: userData.totalScore?.[team.name] || team.totalScore || 0
+            }));
+        } else if (userData) {
+            state.teams = [
+                { name: 'Team 1', score: 0, skipped: 0, totalScore: userData.totalScore?.['Team 1'] || 0 },
+                { name: 'Team 2', score: 0, skipped: 0, totalScore: userData.totalScore?.['Team 2'] || 0 }
+            ];
+        } else {
+            state.teams = [
+                { name: 'Team 1', score: 0, skipped: 0, totalScore: 0 },
+                { name: 'Team 2', score: 0, skipped: 0, totalScore: 0 }
+            ];
+        }
+        state.currentGameSet = (userData && userData.currentGameSet) ? userData.currentGameSet : 'default';
+    } catch (e) {
+        console.error('Error loading user data:', e);
+        // Set default teams if error
         state.teams = [
-            { name: 'Team 1', score: 0, skipped: 0, totalScore: userData.totalScore?.['Team 1'] || 0 },
-            { name: 'Team 2', score: 0, skipped: 0, totalScore: userData.totalScore?.['Team 2'] || 0 }
+            { name: 'Team 1', score: 0, skipped: 0, totalScore: 0 },
+            { name: 'Team 2', score: 0, skipped: 0, totalScore: 0 }
         ];
+        state.currentGameSet = 'default';
     }
-    state.currentGameSet = userData.currentGameSet || 'default';
 }
 
 // Login/User Functions
@@ -1677,6 +1707,50 @@ function render() {
                         </div>
                     </div>
                     
+                    <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">👥 All Users</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Username</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Email</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">School</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Subject</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Year Group</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Games</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Joined</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${stats.allUsers.length > 0 ? stats.allUsers.map(user => `
+                                        <tr class="border-b hover:bg-gray-50">
+                                            <td class="px-4 py-3 font-semibold">${user.username}</td>
+                                            <td class="px-4 py-3 text-gray-600">${user.email || '<span class="text-gray-400 italic">No email</span>'}</td>
+                                            <td class="px-4 py-3">
+                                                <div class="text-sm">
+                                                    <div class="font-semibold">${user.schoolName}</div>
+                                                    <div class="text-gray-500 text-xs font-mono">${user.schoolCode}</div>
+                                                </div>
+                                            </td>
+                                            <td class="px-4 py-3">${user.subject || '-'}</td>
+                                            <td class="px-4 py-3">${user.yearGroup || '-'}</td>
+                                            <td class="px-4 py-3">${user.gamesPlayed}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-600">${user.joinedAt ? new Date(user.joinedAt).toLocaleDateString() : '-'}</td>
+                                            <td class="px-4 py-3">
+                                                <button onclick="openSuperAdminResetPasswordModal('${user.username}', '${user.schoolCode}', '${(user.email || '').replace(/'/g, "\\'")}', '${user.schoolName}')" 
+                                                        class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm">
+                                                    Reset Password
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `).join('') : '<tr><td colspan="8" class="px-4 py-8 text-center text-gray-500">No users found</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
                     <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8">
                         <h2 class="text-2xl font-bold text-gray-800 mb-4">🕒 Recent Activity</h2>
                         <div class="space-y-3">
@@ -2882,6 +2956,77 @@ function confirmResetPassword(username) {
     if (result.success) {
         alert(`Password reset successfully${sendEmail ? '. Email sent to user.' : '.'}`);
         document.getElementById('reset-password-modal').remove();
+        render();
+    } else {
+        alert('Error: ' + (result.error || 'Failed to reset password'));
+    }
+}
+
+function openSuperAdminResetPasswordModal(username, schoolCode, email, schoolName) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.id = 'super-admin-reset-password-modal';
+    modal.innerHTML = `
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Reset Password for ${username}</h3>
+            <p class="text-sm text-gray-600 mb-4">School: ${schoolName} (${schoolCode})</p>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-bold mb-2 text-gray-700">New Password *</label>
+                <input 
+                    id="super-admin-new-password-input" 
+                    type="password" 
+                    placeholder="Enter new password" 
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none"
+                    autofocus
+                >
+                <p class="text-xs text-gray-500 mt-1">Minimum 4 characters</p>
+            </div>
+            
+            <div class="mb-6">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input 
+                        id="super-admin-send-email-checkbox" 
+                        type="checkbox" 
+                        ${email ? 'checked' : 'disabled'}
+                        class="w-5 h-5"
+                    >
+                    <span class="text-sm text-gray-700">Send password reset email to ${email || 'user (no email on file)'}</span>
+                </label>
+            </div>
+            
+            <div class="flex gap-3">
+                <button onclick="confirmSuperAdminResetPassword('${username}', '${schoolCode}')" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700">
+                    Reset Password
+                </button>
+                <button onclick="document.getElementById('super-admin-reset-password-modal').remove()" class="flex-1 bg-gray-500 text-white font-bold py-3 rounded-lg hover:bg-gray-600">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function confirmSuperAdminResetPassword(username, schoolCode) {
+    const newPassword = document.getElementById('super-admin-new-password-input').value.trim();
+    const sendEmail = document.getElementById('super-admin-send-email-checkbox').checked;
+    
+    if (!newPassword) {
+        alert('Please enter a new password');
+        return;
+    }
+    
+    if (newPassword.length < 4) {
+        alert('Password must be at least 4 characters');
+        return;
+    }
+    
+    const result = resetUserPassword(schoolCode, username, newPassword, sendEmail);
+    
+    if (result.success) {
+        alert(`Password reset successfully${sendEmail ? '. Email sent to user.' : '.'}`);
+        document.getElementById('super-admin-reset-password-modal').remove();
         render();
     } else {
         alert('Error: ' + (result.error || 'Failed to reset password'));
