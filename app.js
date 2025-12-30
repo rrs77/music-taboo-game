@@ -2539,7 +2539,7 @@ function render() {
                 </div>
             </div>
         `;
-    } else {
+    } else if (state.phase === 'playing') {
         const team = state.teams[state.currentTeam];
         const remainingCount = state.remaining.length;
         const stackCount = Math.min(remainingCount, 3);
