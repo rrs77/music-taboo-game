@@ -1727,8 +1727,10 @@ function render() {
                         <p class="text-xs text-gray-500 mt-1">Used to access school admin dashboard</p>
                     </div>
 
+                    <div id="create-school-error-container"></div>
+                    
                     <button onclick="createNewSchool()" class="w-full bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-700 text-lg mb-3">
-                        Create School
+                        Create School Account
                     </button>
                     
                     <button onclick="state.phase = 'login'; render();" class="w-full bg-gray-500 text-white font-bold py-3 rounded-xl hover:bg-gray-600 text-sm">
