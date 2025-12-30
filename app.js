@@ -85,12 +85,19 @@ function login() {
         const yearGroup = document.getElementById('year-group-input')?.value.trim();
         const email = document.getElementById('email-input')?.value.trim() || '';
         
+        // Validate username - warn if it looks like a full name
+        if (username && username.split(' ').length > 1) {
+            if (!confirm('⚠️ Warning: Your username looks like a full name. For safety, please use a nickname instead. Continue anyway?')) {
+                return;
+            }
+        }
+        
         if (!schoolCode) {
             showLoginError('Please enter a school code');
             return;
         }
         if (!username) {
-            showLoginError('Please enter a username');
+            showLoginError('Please enter a username (use a nickname, not your full name)');
             return;
         }
         
@@ -1557,10 +1564,17 @@ function render() {
             <div class="flex items-center justify-center min-h-screen px-4 bg-gradient-to-br from-indigo-600 to-purple-700">
                 <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
                     <h1 class="text-5xl font-bold text-gray-800 mb-2 text-center">🎵 Music Taboo</h1>
-                    <p class="text-gray-600 mb-6 text-center">Sign in to your school or create a new school</p>
+                    <p class="text-gray-600 mb-2 text-center font-semibold">Sign in to play or create a new school account</p>
+                    
+                    <div class="mb-4 p-3 bg-blue-50 border-2 border-blue-200 rounded-lg">
+                        <p class="text-xs text-blue-800 font-semibold mb-1">👨‍🏫 For Teachers/Admins:</p>
+                        <p class="text-xs text-blue-700">Create a school account to manage your class. You'll need an email address.</p>
+                        <p class="text-xs text-blue-800 font-semibold mt-2 mb-1">👦👧 For Students:</p>
+                        <p class="text-xs text-blue-700">Just enter your school code and a nickname. <strong>Never use your full name!</strong></p>
+                    </div>
                     
                     <div class="mb-4">
-                        <label class="block text-sm font-bold mb-2 text-gray-700">School Code</label>
+                        <label class="block text-sm font-bold mb-2 text-gray-700">School Code *</label>
                         <input 
                             id="school-code-input" 
                             type="text" 
@@ -1569,30 +1583,31 @@ function render() {
                             onkeypress="if(event.key==='Enter') document.getElementById('username-input').focus()"
                             autofocus
                         >
-                        <p class="text-xs text-gray-500 mt-1">Don't have a code? <button onclick="state.phase = 'create-school'; render();" class="text-indigo-600 hover:underline">Create School</button></p>
+                        <p class="text-xs text-gray-500 mt-1">Don't have a code? <button onclick="state.phase = 'create-school'; render();" class="text-indigo-600 hover:underline font-semibold">Create New School Account</button></p>
                     </div>
                     
                     <div class="mb-4">
-                        <label class="block text-sm font-bold mb-2 text-gray-700">Username</label>
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Username (Use a nickname!) *</label>
                         <input 
                             id="username-input" 
                             type="text" 
-                            placeholder="Enter username" 
+                            placeholder="Enter a nickname (not your full name)" 
                             class="w-full px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none text-center text-lg"
-                            onkeypress="if(event.key==='Enter') document.getElementById('email-input').focus()"
+                            onkeypress="if(event.key==='Enter') { const emailInput = document.getElementById('email-input'); if (emailInput && emailInput.style.display !== 'none') { emailInput.focus(); } else { login(); } }"
                         >
+                        <p class="text-xs text-amber-600 mt-1 font-semibold">⚠️ Use a nickname only - never your full name!</p>
                     </div>
                     
-                    <div class="mb-4">
-                        <label class="block text-sm font-bold mb-2 text-gray-700">Email Address *</label>
+                    <div class="mb-4" id="email-field-container">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Email Address <span class="text-xs text-gray-500">(Optional - for teachers/admins only)</span></label>
                         <input 
                             id="email-input" 
                             type="email" 
-                            placeholder="Enter your email" 
-                            class="w-full px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none text-center text-lg"
-                            onkeypress="if(event.key==='Enter') document.getElementById('password-input').focus()"
+                            placeholder="Enter your email (optional)" 
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none text-center text-lg"
+                            onkeypress="if(event.key==='Enter') { const passwordInput = document.getElementById('password-input'); if (passwordInput && passwordInput.style.display !== 'none') { passwordInput.focus(); } else { login(); } }"
                         >
-                        <p class="text-xs text-gray-500 mt-1">Required for password resets</p>
+                        <p class="text-xs text-gray-500 mt-1">Students don't need to enter email. Only teachers/admins need this for password resets.</p>
                     </div>
                     
                     <div class="mb-4" id="password-field-container" style="display: none;">
@@ -1626,6 +1641,11 @@ function render() {
                             >
                         </div>
                     </div>
+                    
+                    <div class="mb-4 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
+                        <p class="font-semibold">🛡️ Safety Reminder:</p>
+                        <p>Always use a nickname, never your full name. Keep your personal information safe!</p>
+                    </div>
 
                     <div id="login-error-container"></div>
                     
@@ -1649,6 +1669,11 @@ function render() {
             <div class="flex items-center justify-center min-h-screen px-4 bg-gradient-to-br from-indigo-600 to-purple-700">
                 <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
                     <h2 class="text-3xl font-bold text-gray-800 mb-4 text-center">Create New School</h2>
+                    
+                    <div class="mb-4 p-3 bg-green-50 border-2 border-green-200 rounded-lg">
+                        <p class="text-sm text-green-800 font-semibold mb-1">👨‍🏫 Creating a School Account</p>
+                        <p class="text-xs text-green-700">This is for teachers and administrators. You'll need an email address to create and manage your school account.</p>
+                    </div>
                     
                     <div class="mb-4">
                         <label class="block text-sm font-bold mb-2 text-gray-700">School Name *</label>
@@ -1677,7 +1702,18 @@ function render() {
                                 🔄
                             </button>
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">Code is auto-generated from school name. Click 🔄 to regenerate.</p>
+                        <p class="text-xs text-gray-500 mt-1">Code is auto-generated from school name. Share this code with your students so they can join.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Your Email Address *</label>
+                        <input 
+                            id="admin-email-input" 
+                            type="email" 
+                            placeholder="your.email@school.com" 
+                            class="w-full px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none"
+                        >
+                        <p class="text-xs text-gray-500 mt-1">Required for account recovery and password resets</p>
                     </div>
                     
                     <div class="mb-6">
