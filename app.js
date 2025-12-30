@@ -72,128 +72,236 @@ if (currentUsername) {
 
 // Login/User Functions
 function login() {
-    const schoolCode = document.getElementById('school-code-input').value.trim().toUpperCase();
-    const username = document.getElementById('username-input').value.trim();
-    const subject = document.getElementById('subject-input').value.trim();
-    const yearGroup = document.getElementById('year-group-input').value.trim();
-    const email = document.getElementById('email-input')?.value.trim() || '';
-    
-    if (!schoolCode) {
-        alert('Please enter a school code');
-        return;
-    }
-    if (!username) {
-        alert('Please enter a username');
-        return;
-    }
-    
-    // Check if school exists
-    const school = getSchool(schoolCode);
-    if (!school) {
-        alert('School not found. Please check the school code or create a new school.');
-        return;
-    }
-    
-    // Check if user has a password set (for existing users)
-    const existingUser = school.users[username];
-    if (existingUser && existingUser.password) {
-        // User has a password - need to verify it
-        const passwordInput = document.getElementById('password-input');
-        if (!passwordInput || !passwordInput.value) {
-            alert('This account requires a password. Please enter your password.');
-            document.getElementById('password-field-container').style.display = 'block';
-            if (passwordInput) passwordInput.focus();
-            return;
-        }
-        if (passwordInput.value !== existingUser.password) {
-            alert('Incorrect password');
-            return;
-        }
-    }
-    
-    // Join school or get existing user (email is optional for existing users)
-    let result;
     try {
-        result = joinSchool(schoolCode, username, subject, yearGroup, email);
-        if (!result.success) {
-            alert(result.error || 'Failed to join school');
+        // Clear any previous error messages
+        const errorDiv = document.getElementById('login-error-message');
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+        
+        const schoolCode = document.getElementById('school-code-input')?.value.trim().toUpperCase();
+        const username = document.getElementById('username-input')?.value.trim();
+        const subject = document.getElementById('subject-input')?.value.trim();
+        const yearGroup = document.getElementById('year-group-input')?.value.trim();
+        const email = document.getElementById('email-input')?.value.trim() || '';
+        
+        if (!schoolCode) {
+            showLoginError('Please enter a school code');
             return;
         }
+        if (!username) {
+            showLoginError('Please enter a username');
+            return;
+        }
+        
+        // Check if school exists
+        const school = getSchool(schoolCode);
+        if (!school) {
+            showLoginError('School not found. Please check the school code or create a new school.');
+            return;
+        }
+        
+        // Check if user has a password set (for existing users)
+        const existingUser = school.users && school.users[username] ? school.users[username] : null;
+        if (existingUser && existingUser.password) {
+            // User has a password - need to verify it
+            const passwordInput = document.getElementById('password-input');
+            if (!passwordInput || !passwordInput.value) {
+                showLoginError('This account requires a password. Please enter your password.');
+                const passwordContainer = document.getElementById('password-field-container');
+                if (passwordContainer) {
+                    passwordContainer.style.display = 'block';
+                }
+                if (passwordInput) passwordInput.focus();
+                return;
+            }
+            if (passwordInput.value !== existingUser.password) {
+                showLoginError('Incorrect password. Please try again.');
+                if (passwordInput) {
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                }
+                return;
+            }
+        }
+        
+        // Join school or get existing user (email is optional for existing users)
+        let result;
+        try {
+            result = joinSchool(schoolCode, username, subject, yearGroup, email);
+            if (!result || !result.success) {
+                showLoginError(result?.error || 'Failed to join school. Please try again.');
+                return;
+            }
+        } catch (e) {
+            console.error('Error joining school:', e);
+            showLoginError('Error: ' + (e.message || 'Failed to join school. Please try again.'));
+            return;
+        }
+        
+        // Get school again to ensure we have the latest data
+        const updatedSchool = getSchool(schoolCode);
+        if (!updatedSchool) {
+            showLoginError('Error: School not found after joining. Please try again.');
+            return;
+        }
+        
+        // Get user data from school
+        const userData = (updatedSchool.users && updatedSchool.users[username]) || result.user;
+        if (!userData) {
+            showLoginError('Error: Could not load user data. Please try again.');
+            return;
+        }
+        
+        // Set state
+        currentUsername = username;
+        state.username = username;
+        state.schoolCode = schoolCode;
+        state.subject = subject;
+        state.yearGroup = yearGroup;
+        state.isSchoolAdmin = false;
+        
+        // Save to localStorage
+        localStorage.setItem('currentUsername', username);
+        localStorage.setItem('currentSchoolCode', schoolCode);
+        localStorage.setItem('currentSubject', subject);
+        localStorage.setItem('currentYearGroup', yearGroup);
+        
+        // Restore teams with their total scores
+        if (userData.teams && userData.teams.length > 0) {
+            state.teams = userData.teams.map(team => ({
+                name: team.name,
+                score: 0, // Reset current game score
+                skipped: 0, // Reset current game skipped
+                totalScore: userData.totalScore?.[team.name] || team.totalScore || 0
+            }));
+        } else {
+            state.teams = [
+                { name: 'Team 1', score: 0, skipped: 0, totalScore: userData.totalScore?.['Team 1'] || 0 },
+                { name: 'Team 2', score: 0, skipped: 0, totalScore: userData.totalScore?.['Team 2'] || 0 }
+            ];
+        }
+        state.currentGameSet = userData.currentGameSet || 'default';
+        // Reset game state to ensure we show menu, not playing
+        state.currentCard = null;
+        state.remaining = [];
+        state.history = [];
+        state.phase = 'menu';
+        render();
     } catch (e) {
-        console.error('Error joining school:', e);
-        alert('Error: ' + (e.message || 'Failed to join school. Please try again.'));
-        return;
+        console.error('Login error:', e);
+        showLoginError('An unexpected error occurred. Please try again. Error: ' + e.message);
+    }
+}
+
+function showLoginError(message) {
+    // Remove any existing error message
+    const existingError = document.getElementById('login-error-message');
+    if (existingError) {
+        existingError.remove();
     }
     
-    // Get school again to ensure we have the latest data
-    const school = getSchool(schoolCode);
-    if (!school) {
-        alert('Error: School not found after joining');
-        return;
-    }
+    // Create error message element
+    const errorDiv = document.createElement('div');
+    errorDiv.id = 'login-error-message';
+    errorDiv.className = 'mb-4 p-4 bg-red-100 border-2 border-red-400 rounded-lg text-red-700 font-semibold';
+    errorDiv.innerHTML = `
+        <div class="flex items-center gap-2">
+            <span class="text-xl">⚠️</span>
+            <span>${message}</span>
+        </div>
+    `;
     
-    // Set state
-    currentUsername = username;
-    state.username = username;
-    state.schoolCode = schoolCode;
-    state.subject = subject;
-    state.yearGroup = yearGroup;
-    state.isSchoolAdmin = false;
-    
-    // Save to localStorage
-    localStorage.setItem('currentUsername', username);
-    localStorage.setItem('currentSchoolCode', schoolCode);
-    localStorage.setItem('currentSubject', subject);
-    localStorage.setItem('currentYearGroup', yearGroup);
-    
-    // Get user data from school
-    const userData = school.users[username] || result.user;
-    
-    // Restore teams with their total scores
-    if (userData.teams && userData.teams.length > 0) {
-        state.teams = userData.teams.map(team => ({
-            name: team.name,
-            score: 0, // Reset current game score
-            skipped: 0, // Reset current game skipped
-            totalScore: userData.totalScore?.[team.name] || team.totalScore || 0
-        }));
+    // Insert error message before the Sign In button
+    const signInButton = document.querySelector('button[onclick="login()"]');
+    if (signInButton && signInButton.parentElement) {
+        signInButton.parentElement.insertBefore(errorDiv, signInButton);
     } else {
-        state.teams = [
-            { name: 'Team 1', score: 0, skipped: 0, totalScore: userData.totalScore?.['Team 1'] || 0 },
-            { name: 'Team 2', score: 0, skipped: 0, totalScore: userData.totalScore?.['Team 2'] || 0 }
-        ];
+        // Fallback: append to the form container
+        const formContainer = document.querySelector('.bg-white.rounded-3xl');
+        if (formContainer) {
+            const lastChild = formContainer.lastElementChild;
+            if (lastChild) {
+                formContainer.insertBefore(errorDiv, lastChild);
+            } else {
+                formContainer.appendChild(errorDiv);
+            }
+        }
     }
-    state.currentGameSet = userData.currentGameSet || 'default';
-    // Reset game state to ensure we show menu, not playing
-    state.currentCard = null;
-    state.remaining = [];
-    state.history = [];
-    state.phase = 'menu';
-    render();
+    
+    // Scroll error into view
+    errorDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function createNewSchool() {
     const schoolName = document.getElementById('school-name-input').value.trim();
-    const schoolCode = document.getElementById('new-school-code-input').value.trim().toUpperCase();
+    const schoolCodeInput = document.getElementById('new-school-code-input');
+    const schoolCode = schoolCodeInput ? schoolCodeInput.value.trim().toUpperCase() : '';
     const adminPassword = document.getElementById('admin-password-input').value.trim();
     
-    if (!schoolName || !schoolCode || !adminPassword) {
-        alert('Please fill in all fields');
+    if (!schoolName || !adminPassword) {
+        alert('Please fill in school name and admin password');
         return;
     }
     
-    if (schoolCode.length < 3) {
-        alert('School code must be at least 3 characters');
-        return;
+    // Auto-generate school code if not provided
+    let finalSchoolCode = schoolCode;
+    if (!finalSchoolCode || finalSchoolCode.length < 3) {
+        finalSchoolCode = generateSchoolCode(schoolName);
+        // Update the input field to show the generated code
+        if (schoolCodeInput) {
+            schoolCodeInput.value = finalSchoolCode;
+        }
     }
     
-    const result = window.createSchool ? window.createSchool(schoolName, schoolCode, adminPassword) : createSchool(schoolName, schoolCode, adminPassword);
+    const result = window.createSchool ? window.createSchool(schoolName, finalSchoolCode, adminPassword) : createSchool(schoolName, finalSchoolCode, adminPassword);
     if (result.success) {
-        alert(`School "${schoolName}" created successfully!\n\nSchool Code: ${schoolCode}\n\nShare this code with your students so they can join.`);
+        alert(`School "${schoolName}" created successfully!\n\nSchool Code: ${finalSchoolCode}\n\nShare this code with your students so they can join.`);
         state.phase = 'login';
         render();
     } else {
         alert(result.error || 'Failed to create school');
+    }
+}
+
+function generateSchoolCode(schoolName) {
+    // Generate a school code from the school name
+    // Remove special characters, spaces, and convert to uppercase
+    let code = schoolName
+        .replace(/[^a-zA-Z0-9\s]/g, '') // Remove special characters
+        .replace(/\s+/g, '') // Remove spaces
+        .toUpperCase()
+        .substring(0, 10); // Limit to 10 characters
+    
+    // If code is too short, pad with numbers
+    if (code.length < 3) {
+        code = code + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    } else {
+        // Add a random number suffix to ensure uniqueness
+        code = code + Math.floor(Math.random() * 100).toString().padStart(2, '0');
+    }
+    
+    // Check if code already exists, if so, add more numbers
+    const allData = getAllData();
+    const schools = allData.schools || {};
+    let finalCode = code;
+    let attempts = 0;
+    
+    while (schools[finalCode] && attempts < 100) {
+        finalCode = code.substring(0, code.length - 2) + Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        attempts++;
+    }
+    
+    return finalCode;
+}
+
+function autoGenerateSchoolCode() {
+    const schoolName = document.getElementById('school-name-input')?.value.trim();
+    const schoolCodeInput = document.getElementById('new-school-code-input');
+    
+    if (schoolName && schoolCodeInput) {
+        const generatedCode = generateSchoolCode(schoolName);
+        schoolCodeInput.value = generatedCode;
     }
 }
 
@@ -1519,6 +1627,8 @@ function render() {
                         </div>
                     </div>
 
+                    <div id="login-error-container"></div>
+                    
                     <button onclick="login()" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 text-lg mb-3">
                         Sign In
                     </button>
@@ -1547,19 +1657,27 @@ function render() {
                             type="text" 
                             placeholder="e.g., St. Mary's Primary" 
                             class="w-full px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none"
+                            oninput="autoGenerateSchoolCode()"
+                            autofocus
                         >
                     </div>
                     
                     <div class="mb-4">
                         <label class="block text-sm font-bold mb-2 text-gray-700">School Code *</label>
-                        <input 
-                            id="new-school-code-input" 
-                            type="text" 
-                            placeholder="e.g., STMARYS123" 
-                            class="w-full px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none uppercase"
-                            maxlength="20"
-                        >
-                        <p class="text-xs text-gray-500 mt-1">This code will be used by students to join your school</p>
+                        <div class="flex gap-2">
+                            <input 
+                                id="new-school-code-input" 
+                                type="text" 
+                                placeholder="Auto-generated from school name" 
+                                class="flex-1 px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none uppercase bg-gray-50"
+                                maxlength="20"
+                                readonly
+                            >
+                            <button onclick="autoGenerateSchoolCode()" class="px-4 py-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 font-semibold" title="Regenerate code">
+                                🔄
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Code is auto-generated from school name. Click 🔄 to regenerate.</p>
                     </div>
                     
                     <div class="mb-6">

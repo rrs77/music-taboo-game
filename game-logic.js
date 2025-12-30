@@ -25,12 +25,50 @@ function getSchool(schoolCode) {
     return schools[schoolCode] || null;
 }
 
+function generateSchoolCode(schoolName) {
+    // Generate a school code from the school name
+    // Remove special characters, spaces, and convert to uppercase
+    let code = schoolName
+        .replace(/[^a-zA-Z0-9\s]/g, '') // Remove special characters
+        .replace(/\s+/g, '') // Remove spaces
+        .toUpperCase()
+        .substring(0, 10); // Limit to 10 characters
+    
+    // If code is too short, pad with numbers
+    if (code.length < 3) {
+        code = code + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    } else {
+        // Add a random number suffix to ensure uniqueness
+        code = code + Math.floor(Math.random() * 100).toString().padStart(2, '0');
+    }
+    
+    // Check if code already exists, if so, add more numbers
+    const allData = getAllData();
+    const schools = allData.schools || {};
+    let finalCode = code;
+    let attempts = 0;
+    
+    while (schools[finalCode] && attempts < 100) {
+        finalCode = code.substring(0, code.length - 2) + Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        attempts++;
+    }
+    
+    return finalCode;
+}
+
 function createSchool(schoolName, schoolCode, adminPassword) {
     const allData = getAllData();
     if (!allData.schools) allData.schools = {};
     
+    // Auto-generate school code if not provided
+    if (!schoolCode || schoolCode.trim() === '') {
+        schoolCode = generateSchoolCode(schoolName);
+    } else {
+        schoolCode = schoolCode.trim().toUpperCase();
+    }
+    
     if (allData.schools[schoolCode]) {
-        return { success: false, error: 'School code already exists' };
+        return { success: false, error: 'School code already exists. Please try again or use a different code.' };
     }
     
     allData.schools[schoolCode] = {
