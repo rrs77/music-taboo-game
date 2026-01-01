@@ -1,7 +1,8 @@
 // Initialize state
 let currentUsername = localStorage.getItem('currentUsername') || '';
 let state = {
-    phase: currentUsername ? 'menu' : 'login',
+    phase: currentUsername ? 'menu' : 'welcome',
+    userType: '', // 'pupil', 'teacher', or 'admin'
     username: currentUsername,
     schoolCode: localStorage.getItem('currentSchoolCode') || '',
     isSchoolAdmin: false,
@@ -434,11 +435,17 @@ function createGameSet() {
     const name = prompt('Enter game set name:');
     if (!name) return;
     const setId = 'set_' + Date.now();
+    const shareGame = confirm('Would you like to share this game set in the portal for other teachers to use?');
+    
     const newSet = {
         name: name,
         description: '',
         cards: [],
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        shared: shareGame,
+        sharedBy: state.username || 'Unknown',
+        sharedBySchool: state.schoolCode || '',
+        sharedAt: shareGame ? new Date().toISOString() : null
     };
     saveGameSet(setId, newSet);
     state.editingGameSet = setId;
@@ -446,6 +453,21 @@ function createGameSet() {
     state.editingCards = [{ id: 1, title: '', family: '', hint: '', taboo: [], soundMethod: '', size: '', sound: '', position: '' }];
     state.phase = 'visual-card-editor';
     render();
+}
+
+function openGamePortal() {
+    state.phase = 'game-portal';
+    render();
+}
+
+function addGameFromPortal(setId) {
+    const result = copyGameSetToAccount(setId);
+    if (result.success) {
+        alert('Game set added to your account successfully!');
+        render();
+    } else {
+        alert('Error: ' + (result.error || 'Failed to add game set'));
+    }
 }
 
 function editGameSet(setId) {
@@ -1559,18 +1581,60 @@ function render() {
     const teamColors = ['team-colors-1', 'team-colors-2', 'team-colors-3', 'team-colors-4', 'team-colors-5', 'team-colors-6'];
     const gameSets = getGameSets();
 
-    if (state.phase === 'login') {
+    if (state.phase === 'welcome') {
+        // Initial welcome screen with role selection
         app.innerHTML = `
             <div class="flex items-center justify-center min-h-screen px-4 bg-gradient-to-br from-indigo-600 to-purple-700">
                 <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
                     <h1 class="text-5xl font-bold text-gray-800 mb-2 text-center">🎵 Music Taboo</h1>
-                    <p class="text-gray-600 mb-2 text-center font-semibold">Sign in to play or create a new school account</p>
+                    <p class="text-gray-600 mb-6 text-center font-semibold">Choose how you want to sign in</p>
                     
-                    <div class="mb-4 p-3 bg-blue-50 border-2 border-blue-200 rounded-lg">
-                        <p class="text-xs text-blue-800 font-semibold mb-1">👨‍🏫 For Teachers/Admins:</p>
-                        <p class="text-xs text-blue-700">Create a school account to manage your class. You'll need an email address.</p>
-                        <p class="text-xs text-blue-800 font-semibold mt-2 mb-1">👦👧 For Students:</p>
-                        <p class="text-xs text-blue-700">Just enter your school code and a nickname. <strong>Never use your full name!</strong></p>
+                    <div class="space-y-3 mb-6">
+                        <button onclick="state.userType = 'pupil'; state.phase = 'login'; render();" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 text-lg flex items-center justify-center gap-3">
+                            <span class="text-2xl">👦👧</span>
+                            <span>Pupil</span>
+                        </button>
+                        
+                        <button onclick="state.userType = 'teacher'; state.phase = 'login'; render();" class="w-full bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-700 text-lg flex items-center justify-center gap-3">
+                            <span class="text-2xl">👨‍🏫</span>
+                            <span>Teacher</span>
+                        </button>
+                        
+                        <button onclick="state.phase = 'super-admin-login'; render();" class="w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 text-lg flex items-center justify-center gap-3">
+                            <span class="text-2xl">🔐</span>
+                            <span>Admin</span>
+                        </button>
+                    </div>
+                    
+                    <div class="text-center">
+                        <p class="text-xs text-gray-500">Don't have a school code?</p>
+                        <button onclick="state.userType = 'teacher'; state.phase = 'create-school'; render();" class="text-indigo-600 hover:underline font-semibold text-sm">
+                            Create New School Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (state.phase === 'login') {
+        const isPupil = state.userType === 'pupil';
+        const isTeacher = state.userType === 'teacher';
+        
+        app.innerHTML = `
+            <div class="flex items-center justify-center min-h-screen px-4 bg-gradient-to-br from-indigo-600 to-purple-700">
+                <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
+                    <div class="flex items-center justify-between mb-4">
+                        <button onclick="state.phase = 'welcome'; render();" class="text-gray-600 hover:text-gray-800 text-sm font-semibold">← Back</button>
+                        <h1 class="text-4xl font-bold text-gray-800 text-center flex-1">🎵 Music Taboo</h1>
+                        <div class="w-16"></div>
+                    </div>
+                    
+                    <div class="mb-4 p-3 ${isPupil ? 'bg-blue-50 border-2 border-blue-200' : 'bg-green-50 border-2 border-green-200'} rounded-lg">
+                        <p class="text-xs ${isPupil ? 'text-blue-800' : 'text-green-800'} font-semibold mb-1">
+                            ${isPupil ? '👦👧 Pupil Login' : '👨‍🏫 Teacher Login'}
+                        </p>
+                        <p class="text-xs ${isPupil ? 'text-blue-700' : 'text-green-700'}">
+                            ${isPupil ? 'Enter your school code and a nickname. <strong>Never use your full name!</strong>' : 'Enter your school code and username. Email is optional but recommended for password recovery.'}
+                        </p>
                     </div>
                     
                     <div class="mb-4">
@@ -1598,8 +1662,9 @@ function render() {
                         <p class="text-xs text-amber-600 mt-1 font-semibold">⚠️ Use a nickname only - never your full name!</p>
                     </div>
                     
+                    ${!isPupil ? `
                     <div class="mb-4" id="email-field-container">
-                        <label class="block text-sm font-bold mb-2 text-gray-700">Email Address <span class="text-xs text-gray-500">(Optional - for teachers/admins only)</span></label>
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Email Address <span class="text-xs text-gray-500">(Optional - recommended)</span></label>
                         <input 
                             id="email-input" 
                             type="email" 
@@ -1607,8 +1672,9 @@ function render() {
                             class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none text-center text-lg"
                             onkeypress="if(event.key==='Enter') { const passwordInput = document.getElementById('password-input'); if (passwordInput && passwordInput.style.display !== 'none') { passwordInput.focus(); } else { login(); } }"
                         >
-                        <p class="text-xs text-gray-500 mt-1">Students don't need to enter email. Only teachers/admins need this for password resets.</p>
+                        <p class="text-xs text-gray-500 mt-1">Recommended for password recovery and accessing the game portal.</p>
                     </div>
+                    ` : ''}
                     
                     <div class="mb-4" id="password-field-container" style="display: none;">
                         <label class="block text-sm font-bold mb-2 text-gray-700">Password</label>
@@ -1653,14 +1719,13 @@ function render() {
                         Sign In
                     </button>
                     
-                    <div class="flex gap-2">
+                    ${isTeacher ? `
+                    <div class="flex gap-2 mt-3">
                         <button onclick="state.phase = 'school-admin-login'; render();" class="flex-1 bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 text-sm">
                             School Admin
                         </button>
-                        <button onclick="state.phase = 'super-admin-login'; render();" class="flex-1 bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 text-sm">
-                            Super Admin
-                        </button>
                     </div>
+                    ` : ''}
                 </div>
             </div>
         `;
@@ -1921,6 +1986,45 @@ function render() {
                         </div>
                     </div>
                     
+                    <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">🌐 All Shared Games</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Game Name</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Cards</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Created By</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">School</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Shared Date</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${Object.entries(getAllSharedGames()).map(([setId, gameSet]) => `
+                                        <tr class="border-b hover:bg-gray-50">
+                                            <td class="px-4 py-3 font-semibold">${gameSet.name}</td>
+                                            <td class="px-4 py-3">${gameSet.cards?.length || 0}</td>
+                                            <td class="px-4 py-3">${gameSet.sharedBy || 'Unknown'}</td>
+                                            <td class="px-4 py-3">${gameSet.sharedBySchool || '-'}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-600">${gameSet.sharedAt ? new Date(gameSet.sharedAt).toLocaleDateString() : '-'}</td>
+                                            <td class="px-4 py-3">
+                                                <div class="flex gap-2">
+                                                    <button onclick="copySharedGameToAll('${setId}')" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm">
+                                                        Copy to All
+                                                    </button>
+                                                    <button onclick="deleteSharedGameConfirm('${setId}')" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm">
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `).join('') || '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">No shared games</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
                     <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8">
                         <h2 class="text-2xl font-bold text-gray-800 mb-4">🕒 Recent Activity</h2>
                         <div class="space-y-3">
@@ -2060,6 +2164,11 @@ function render() {
                             <button onclick="state.phase = 'score-history'; render();" class="flex-1 bg-yellow-600 text-white font-bold py-2 md:py-3 rounded-lg hover:bg-yellow-700 text-sm md:text-base">
                                 📊 Previous Scores
                             </button>
+                            ${state.userType === 'teacher' || state.isSchoolAdmin || state.isSuperAdmin ? `
+                            <button onclick="openGamePortal()" class="flex-1 bg-purple-600 text-white font-bold py-2 md:py-3 rounded-lg hover:bg-purple-700 text-sm md:text-base">
+                                🌐 Game Portal
+                            </button>
+                            ` : ''}
                             <button onclick="openSettings()" class="flex-1 bg-gray-600 text-white font-bold py-2 md:py-3 rounded-lg hover:bg-gray-700 text-sm md:text-base">
                                 ⚙️ Settings
                             </button>

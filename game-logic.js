@@ -705,8 +705,60 @@ function getGameSets() {
 
 function saveGameSet(setId, gameSet) {
     const allData = getAllData();
+    if (!allData.gameSets) allData.gameSets = {};
+    if (!allData.sharedGames) allData.sharedGames = {};
+    
+    // If game is marked as shared, add to shared games portal
+    if (gameSet.shared) {
+        allData.sharedGames[setId] = {
+            ...gameSet,
+            sharedBy: gameSet.sharedBy || 'Unknown',
+            sharedAt: gameSet.sharedAt || new Date().toISOString(),
+            sharedBySchool: gameSet.sharedBySchool || ''
+        };
+    }
+    
     allData.gameSets[setId] = gameSet;
     saveAllData(allData);
+}
+
+function getAllSharedGames() {
+    const allData = getAllData();
+    return allData.sharedGames || {};
+}
+
+function copyGameSetToAccount(setId, targetAccountId) {
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        return { success: false, error: 'Shared game not found' };
+    }
+    
+    // Create a copy for the target account
+    const newSetId = 'set_' + Date.now();
+    const copiedGame = {
+        ...sharedGame,
+        shared: false, // Not shared by default when copied
+        copiedFrom: setId,
+        copiedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+    };
+    
+    if (!allData.gameSets) allData.gameSets = {};
+    allData.gameSets[newSetId] = copiedGame;
+    saveAllData(allData);
+    
+    return { success: true, newSetId: newSetId };
+}
+
+function deleteSharedGame(setId) {
+    const allData = getAllData();
+    if (allData.sharedGames && allData.sharedGames[setId]) {
+        delete allData.sharedGames[setId];
+        saveAllData(allData);
+        return { success: true };
+    }
+    return { success: false, error: 'Shared game not found' };
 }
 
 function deleteGameSet(setId) {
