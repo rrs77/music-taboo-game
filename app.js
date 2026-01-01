@@ -196,6 +196,58 @@ function login() {
         state.history = [];
         state.phase = 'menu';
         render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
     } catch (e) {
         console.error('Login error:', e);
         showLoginError('An unexpected error occurred. Please try again. Error: ' + e.message);
@@ -267,6 +319,58 @@ function createNewSchool() {
         alert(`School "${schoolName}" created successfully!\n\nSchool Code: ${finalSchoolCode}\n\nShare this code with your students so they can join.`);
         state.phase = 'login';
         render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
     } else {
         alert(result.error || 'Failed to create school');
     }
@@ -339,6 +443,58 @@ function loginAsSchoolAdmin() {
     state.username = `admin_${schoolCode}`;
     state.phase = 'school-admin';
     render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
 }
 
 function loginAsSuperAdmin() {
@@ -360,6 +516,58 @@ function loginAsSuperAdmin() {
     state.username = email;
     state.phase = 'super-admin-dashboard';
     render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
 }
 
 function logout() {
@@ -385,6 +593,58 @@ function logout() {
     state.isSchoolAdmin = false;
     state.schoolCode = '';
     render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
 }
 
 function saveCurrentGame() {
@@ -423,11 +683,115 @@ window.addEventListener('beforeunload', () => {
 function openSettings() {
     state.phase = 'settings';
     render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
 }
 
 function closeSettings() {
     state.phase = 'menu';
     render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
 }
 
 // Game Set Management
@@ -453,11 +817,115 @@ function createGameSet() {
     state.editingCards = [{ id: 1, title: '', family: '', hint: '', taboo: [], soundMethod: '', size: '', sound: '', position: '' }];
     state.phase = 'visual-card-editor';
     render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
 }
 
 function openGamePortal() {
     state.phase = 'game-portal';
     render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
 }
 
 function addGameFromPortal(setId) {
@@ -465,6 +933,58 @@ function addGameFromPortal(setId) {
     if (result.success) {
         alert('Game set added to your account successfully!');
         render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
     } else {
         alert('Error: ' + (result.error || 'Failed to add game set'));
     }
@@ -494,6 +1014,58 @@ function editGameSet(setId) {
     state.editingCardIndex = 0;
     state.phase = 'visual-card-editor';
     render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
 }
 
 function saveGameSetEdit() {
@@ -556,6 +1128,58 @@ function saveGameSetEdit() {
     state.editingGameSet = null;
     state.phase = 'menu';
     render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
 }
 
 // Visual Card Editor Functions
@@ -607,6 +1231,58 @@ function nextCard() {
     
     state.showOrchestraInfo = false;
     render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
 }
 
 function previousCard() {
@@ -618,6 +1294,58 @@ function previousCard() {
     
     state.showOrchestraInfo = false;
     render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
 }
 
 function finishEditingCards() {
@@ -632,12 +1360,84 @@ function finishEditingCards() {
     gameSet.description = document.getElementById('set-description').value;
     gameSet.cards = state.editingCards.filter(card => card.title.trim() !== '');
     
+    // Update shared status if checkbox exists
+    const shareCheckbox = document.getElementById('share-game-checkbox');
+    if (shareCheckbox) {
+        const wasShared = gameSet.shared;
+        gameSet.shared = shareCheckbox.checked;
+        if (gameSet.shared && !wasShared) {
+            // Just shared - update metadata
+            gameSet.sharedBy = state.username || 'Unknown';
+            gameSet.sharedBySchool = state.schoolCode || '';
+            gameSet.sharedAt = new Date().toISOString();
+        } else if (!gameSet.shared && wasShared) {
+            // Unshared - remove from shared games
+            const allData = getAllData();
+            if (allData.sharedGames && allData.sharedGames[state.editingGameSet]) {
+                delete allData.sharedGames[state.editingGameSet];
+                saveAllData(allData);
+            }
+        }
+    }
+    
     saveGameSet(state.editingGameSet, gameSet);
     state.editingGameSet = null;
     state.editingCards = [];
     state.editingCardIndex = 0;
     state.phase = 'menu';
     render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
 }
 
 function showAIGenerator() {
@@ -1073,6 +1873,58 @@ Return ONLY a valid JSON array with ${count} cards. Each card must have a unique
             const modal = document.querySelector('.fixed');
             if (modal) modal.remove();
             render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
         }, 2000);
     }
         
@@ -1185,6 +2037,58 @@ function deleteGameSetConfirm(setId) {
             }
         }
         render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
     }
 }
 
@@ -1203,6 +2107,58 @@ function addTeam() {
         });
         saveCurrentGame();
         render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
     }
 }
 
@@ -1211,6 +2167,58 @@ function removeTeam(index) {
         state.teams.splice(index, 1);
         saveCurrentGame();
         render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
     }
 }
 
@@ -1240,6 +2248,58 @@ function selectGameSet(setId) {
     saveUserData(state.username, userData);
     state.phase = 'setup';
     render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
 }
 
 function startGame() {
@@ -1259,6 +2319,58 @@ function startGame() {
             alert(`Game set not found! Please select a game set from the menu.`);
             state.phase = 'menu';
             render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
             return;
         }
         
@@ -1296,6 +2408,58 @@ function startGame() {
         saveCurrentGame();
         drawCard();
         render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
     } catch (error) {
         console.error('Error starting game:', error);
         alert('Error starting game: ' + error.message);
@@ -1342,6 +2506,58 @@ function finishGame() {
     
     state.phase = 'detailed-scores';
     render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
 }
 
 function drawCard() {
@@ -1356,11 +2572,115 @@ function drawCard() {
         saveUserData(state.username, userData);
         saveCurrentGame();
         render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
         return;
     }
     state.currentCard = state.remaining.shift();
     state.showOrchestraInfo = false;
     render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
 }
 
 function correct() {
@@ -1396,6 +2716,58 @@ function toggleOrchestraInfo() {
     if (!state.currentCard) return; // Don't toggle if no card
     state.showOrchestraInfo = !state.showOrchestraInfo;
     render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
 }
 
 // Make function globally accessible
@@ -1436,6 +2808,58 @@ function updateCardPreview() {
     // Re-render to update back of card
     if (state.phase === 'visual-card-editor') {
         render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
     }
 }
 
@@ -1501,7 +2925,59 @@ function deleteScoreEntry(username, date) {
             game => game.date !== date
         );
         saveAllData(allData);
-        render(); // Re-render to show updated list
+        render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+} // Re-render to show updated list
     }
 }
 
@@ -1561,6 +3037,58 @@ function reset() {
     state.history = [];
     saveCurrentGame();
     render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
 }
 
 function clearAllScores() {
@@ -1572,6 +3100,58 @@ function clearAllScores() {
         });
         saveUserData(state.username, userData);
         render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
     }
 }
 
@@ -1590,17 +3170,173 @@ function render() {
                     <p class="text-gray-600 mb-6 text-center font-semibold">Choose how you want to sign in</p>
                     
                     <div class="space-y-3 mb-6">
-                        <button onclick="state.userType = 'pupil'; state.phase = 'login'; render();" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 text-lg flex items-center justify-center gap-3">
+                        <button onclick="state.userType = 'pupil'; state.phase = 'login'; render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 text-lg flex items-center justify-center gap-3">
                             <span class="text-2xl">👦👧</span>
                             <span>Pupil</span>
                         </button>
                         
-                        <button onclick="state.userType = 'teacher'; state.phase = 'login'; render();" class="w-full bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-700 text-lg flex items-center justify-center gap-3">
+                        <button onclick="state.userType = 'teacher'; state.phase = 'login'; render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}" class="w-full bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-700 text-lg flex items-center justify-center gap-3">
                             <span class="text-2xl">👨‍🏫</span>
                             <span>Teacher</span>
                         </button>
                         
-                        <button onclick="state.phase = 'super-admin-login'; render();" class="w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 text-lg flex items-center justify-center gap-3">
+                        <button onclick="state.phase = 'super-admin-login'; render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}" class="w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 text-lg flex items-center justify-center gap-3">
                             <span class="text-2xl">🔐</span>
                             <span>Admin</span>
                         </button>
@@ -1608,7 +3344,59 @@ function render() {
                     
                     <div class="text-center">
                         <p class="text-xs text-gray-500">Don't have a school code?</p>
-                        <button onclick="state.userType = 'teacher'; state.phase = 'create-school'; render();" class="text-indigo-600 hover:underline font-semibold text-sm">
+                        <button onclick="state.userType = 'teacher'; state.phase = 'create-school'; render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}" class="text-indigo-600 hover:underline font-semibold text-sm">
                             Create New School Account
                         </button>
                     </div>
@@ -1623,7 +3411,59 @@ function render() {
             <div class="flex items-center justify-center min-h-screen px-4 bg-gradient-to-br from-indigo-600 to-purple-700">
                 <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
                     <div class="flex items-center justify-between mb-4">
-                        <button onclick="state.phase = 'welcome'; render();" class="text-gray-600 hover:text-gray-800 text-sm font-semibold">← Back</button>
+                        <button onclick="state.phase = 'welcome'; render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}" class="text-gray-600 hover:text-gray-800 text-sm font-semibold">← Back</button>
                         <h1 class="text-4xl font-bold text-gray-800 text-center flex-1">🎵 Music Taboo</h1>
                         <div class="w-16"></div>
                     </div>
@@ -1647,7 +3487,59 @@ function render() {
                             onkeypress="if(event.key==='Enter') document.getElementById('username-input').focus()"
                             autofocus
                         >
-                        <p class="text-xs text-gray-500 mt-1">Don't have a code? <button onclick="state.phase = 'create-school'; render();" class="text-indigo-600 hover:underline font-semibold">Create New School Account</button></p>
+                        <p class="text-xs text-gray-500 mt-1">Don't have a code? <button onclick="state.phase = 'create-school'; render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}" class="text-indigo-600 hover:underline font-semibold">Create New School Account</button></p>
                     </div>
                     
                     <div class="mb-4">
@@ -1721,7 +3613,59 @@ function render() {
                     
                     ${isTeacher ? `
                     <div class="flex gap-2 mt-3">
-                        <button onclick="state.phase = 'school-admin-login'; render();" class="flex-1 bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 text-sm">
+                        <button onclick="state.phase = 'school-admin-login'; render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}" class="flex-1 bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 text-sm">
                             School Admin
                         </button>
                     </div>
@@ -1798,7 +3742,59 @@ function render() {
                         Create School Account
                     </button>
                     
-                    <button onclick="state.phase = 'login'; render();" class="w-full bg-gray-500 text-white font-bold py-3 rounded-xl hover:bg-gray-600 text-sm">
+                    <button onclick="state.phase = 'login'; render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}" class="w-full bg-gray-500 text-white font-bold py-3 rounded-xl hover:bg-gray-600 text-sm">
                         Back to Login
                     </button>
                 </div>
@@ -1834,7 +3830,59 @@ function render() {
                         Login as Admin
                     </button>
                     
-                    <button onclick="state.phase = 'login'; render();" class="w-full bg-gray-500 text-white font-bold py-3 rounded-xl hover:bg-gray-600 text-sm">
+                    <button onclick="state.phase = 'login'; render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}" class="w-full bg-gray-500 text-white font-bold py-3 rounded-xl hover:bg-gray-600 text-sm">
                         Back to Login
                     </button>
                 </div>
@@ -1874,7 +3922,59 @@ function render() {
                         Login as Super Admin
                     </button>
                     
-                    <button onclick="state.phase = 'login'; render();" class="w-full bg-gray-500 text-white font-bold py-3 rounded-xl hover:bg-gray-600 text-sm">
+                    <button onclick="state.phase = 'login'; render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}" class="w-full bg-gray-500 text-white font-bold py-3 rounded-xl hover:bg-gray-600 text-sm">
                         Back to Login
                     </button>
                 </div>
@@ -2161,7 +4261,59 @@ function render() {
                         </div>
 
                         <div class="flex flex-col sm:flex-row gap-2 mb-4">
-                            <button onclick="state.phase = 'score-history'; render();" class="flex-1 bg-yellow-600 text-white font-bold py-2 md:py-3 rounded-lg hover:bg-yellow-700 text-sm md:text-base">
+                            <button onclick="state.phase = 'score-history'; render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}" class="flex-1 bg-yellow-600 text-white font-bold py-2 md:py-3 rounded-lg hover:bg-yellow-700 text-sm md:text-base">
                                 📊 Previous Scores
                             </button>
                             ${state.userType === 'teacher' || state.isSchoolAdmin || state.isSuperAdmin ? `
@@ -2183,6 +4335,121 @@ function render() {
                                 <input type="file" accept=".json" onchange="importData(event)" style="display: none;">
                             </label>
                         </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (state.phase === 'game-portal') {
+        const sharedGames = getAllSharedGames();
+        const sharedGamesList = Object.entries(sharedGames);
+        const isTeacher = state.userType === 'teacher' || state.isSchoolAdmin;
+        
+        app.innerHTML = `
+            <div class="min-h-screen p-4 md:p-8 bg-gradient-to-br from-gray-50 to-gray-100">
+                <div class="max-w-6xl mx-auto">
+                    <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 mb-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">🌐 Game Portal</h1>
+                                <p class="text-gray-600">Browse and add shared game sets created by teachers</p>
+                            </div>
+                            <button onclick="state.phase = 'menu'; render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold">
+                                Back to Menu
+                            </button>
+                        </div>
+                        
+                        ${sharedGamesList.length > 0 ? `
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                ${sharedGamesList.map(([setId, gameSet]) => `
+                                    <div class="border-2 border-purple-200 rounded-lg p-4 hover:border-purple-400 transition bg-gradient-to-br from-purple-50 to-indigo-50">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <h3 class="text-lg font-bold text-gray-800 flex-1">${gameSet.name}</h3>
+                                            ${state.isSuperAdmin ? `
+                                                <button onclick="deleteSharedGameConfirm('${setId}')" class="text-red-600 hover:text-red-800 text-xl" title="Delete">
+                                                    🗑️
+                                                </button>
+                                            ` : ''}
+                                        </div>
+                                        <p class="text-sm text-gray-600 mb-2">${gameSet.description || 'No description'}</p>
+                                        <div class="text-xs text-gray-500 mb-3">
+                                            <p>📦 ${gameSet.cards?.length || 0} cards</p>
+                                            <p>👤 Created by: ${gameSet.sharedBy || 'Unknown'}</p>
+                                            ${gameSet.sharedBySchool ? `<p>🏫 School: ${gameSet.sharedBySchool}</p>` : ''}
+                                            ${gameSet.sharedAt ? `<p>📅 Shared: ${new Date(gameSet.sharedAt).toLocaleDateString()}</p>` : ''}
+                                        </div>
+                                        ${isTeacher ? `
+                                            <button onclick="addGameFromPortal('${setId}')" class="w-full bg-purple-600 text-white font-bold py-2 rounded-lg hover:bg-purple-700">
+                                                ➕ Add to My Account
+                                            </button>
+                                        ` : `
+                                            <p class="text-xs text-gray-500 text-center py-2">Teachers can add this to their account</p>
+                                        `}
+                                        ${state.isSuperAdmin ? `
+                                            <button onclick="copySharedGameToAll('${setId}')" class="w-full mt-2 bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 text-sm">
+                                                📋 Copy to All Accounts
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : `
+                            <div class="text-center py-12">
+                                <p class="text-gray-500 text-lg mb-4">No shared games available yet</p>
+                                <p class="text-gray-400 text-sm">Create a game set and share it to make it available in the portal!</p>
+                            </div>
+                        `}
                     </div>
                 </div>
             </div>
@@ -2215,7 +4482,59 @@ function render() {
                                 <button onclick="finishEditingCards()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold">
                                     Finish & Save
                                 </button>
-                                <button onclick="state.phase = 'menu'; render();" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 font-semibold">
+                                <button onclick="state.phase = 'menu'; render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 font-semibold">
                                     Cancel
                                 </button>
                             </div>
@@ -2230,6 +4549,32 @@ function render() {
                                 <label class="block text-sm font-bold mb-2">Description</label>
                                 <input id="set-description" type="text" value="${gameSet.description || ''}" placeholder="Brief description of this game set" class="w-full px-4 py-2 border-2 rounded-lg">
                             </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                    id="share-game-checkbox" 
+                                    type="checkbox" 
+                                    ${gameSet.shared ? 'checked' : ''}
+                                    class="w-5 h-5"
+                                >
+                                <span class="text-sm font-semibold text-gray-700">Share this game set in the portal for other teachers to use</span>
+                            </label>
+                            <p class="text-xs text-gray-500 mt-1 ml-7">When shared, other teachers can browse and add this game to their accounts</p>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                    id="share-game-checkbox" 
+                                    type="checkbox" 
+                                    ${gameSet.shared ? 'checked' : ''}
+                                    class="w-5 h-5"
+                                >
+                                <span class="text-sm font-semibold text-gray-700">Share this game set in the portal for other teachers to use</span>
+                            </label>
+                            <p class="text-xs text-gray-500 mt-1 ml-7">When shared, other teachers can browse and add this game to their accounts</p>
                         </div>
                     </div>
                     
@@ -2452,7 +4797,59 @@ function render() {
                             <button onclick="saveGameSetEdit()" class="flex-1 bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700">
                                 Save
                             </button>
-                            <button onclick="state.editingGameSet = null; state.phase = 'menu'; render();" class="flex-1 bg-gray-500 text-white font-bold py-3 rounded-lg hover:bg-gray-600">
+                            <button onclick="state.editingGameSet = null; state.phase = 'menu'; render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}" class="flex-1 bg-gray-500 text-white font-bold py-3 rounded-lg hover:bg-gray-600">
                                 Cancel
                             </button>
                         </div>
@@ -2472,7 +4869,59 @@ function render() {
                     <div class="flex justify-between items-center mb-4">
                         <h1 class="text-4xl font-bold text-gray-800">🎵 Music Taboo</h1>
                         <div class="flex gap-2">
-                            <button onclick="state.phase = 'menu'; render();" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-sm">
+                            <button onclick="state.phase = 'menu'; render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-sm">
                                 Back to Menu
                             </button>
                             <button onclick="logout()" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-semibold">
@@ -2560,7 +5009,59 @@ function render() {
                         <button onclick="reset()" class="flex-1 bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 text-lg">
                             Play Again
                         </button>
-                        <button onclick="state.phase = 'detailed-scores'; render();" class="flex-1 bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 text-lg">
+                        <button onclick="state.phase = 'detailed-scores'; render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}" class="flex-1 bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 text-lg">
                             View Detailed Scores
                         </button>
                     </div>
@@ -2586,7 +5087,59 @@ function render() {
                         <div class="flex justify-between items-center mb-2 md:mb-3 flex-shrink-0">
                             <h1 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-800">Detailed Scores</h1>
                             <div class="flex gap-1 md:gap-2">
-                                <button onclick="state.phase = 'menu'; render();" class="px-2 md:px-3 py-1 md:py-1.5 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-xs md:text-sm">
+                                <button onclick="state.phase = 'menu'; render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}" class="px-2 md:px-3 py-1 md:py-1.5 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-xs md:text-sm">
                                     Menu
                                 </button>
                                 <button onclick="logout()" class="px-2 md:px-3 py-1 md:py-1.5 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-xs md:text-sm font-semibold">
@@ -2776,7 +5329,59 @@ function render() {
                             <button onclick="reset()" class="flex-1 bg-indigo-600 text-white font-bold py-2 md:py-2.5 rounded-lg hover:bg-indigo-700 text-sm md:text-base">
                                 Play Again
                             </button>
-                            <button onclick="state.phase = 'menu'; render();" class="flex-1 bg-gray-600 text-white font-bold py-2 md:py-2.5 rounded-lg hover:bg-gray-700 text-sm md:text-base">
+                            <button onclick="state.phase = 'menu'; render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}" class="flex-1 bg-gray-600 text-white font-bold py-2 md:py-2.5 rounded-lg hover:bg-gray-700 text-sm md:text-base">
                                 Back to Menu
                             </button>
                         </div>
@@ -2810,7 +5415,59 @@ function render() {
                         <div class="flex justify-between items-center mb-2 md:mb-3 flex-shrink-0">
                             <h1 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-800">All Previous Scores</h1>
                             <div class="flex gap-1 md:gap-2">
-                                <button onclick="state.phase = 'menu'; render();" class="px-2 md:px-3 py-1 md:py-1.5 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-xs md:text-sm">
+                                <button onclick="state.phase = 'menu'; render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}" class="px-2 md:px-3 py-1 md:py-1.5 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-xs md:text-sm">
                                     Back to Menu
                                 </button>
                                 <button onclick="logout()" class="px-2 md:px-3 py-1 md:py-1.5 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-xs md:text-sm font-semibold">
@@ -3236,6 +5893,58 @@ function confirmResetPassword(username) {
         alert(`Password reset successfully${sendEmail ? '. Email sent to user.' : '.'}`);
         document.getElementById('reset-password-modal').remove();
         render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
     } else {
         alert('Error: ' + (result.error || 'Failed to reset password'));
     }
@@ -3307,10 +6016,114 @@ function confirmSuperAdminResetPassword(username, schoolCode) {
         alert(`Password reset successfully${sendEmail ? '. Email sent to user.' : '.'}`);
         document.getElementById('super-admin-reset-password-modal').remove();
         render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
     } else {
         alert('Error: ' + (result.error || 'Failed to reset password'));
     }
 }
 
 render();
+
+function deleteSharedGameConfirm(setId) {
+    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
+        const result = deleteSharedGame(setId);
+        if (result.success) {
+            alert('Shared game deleted successfully');
+            render();
+        } else {
+            alert('Error: ' + (result.error || 'Failed to delete game'));
+        }
+    }
+}
+
+function copySharedGameToAll(setId) {
+    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
+        return;
+    }
+    
+    const allData = getAllData();
+    const sharedGame = allData.sharedGames[setId];
+    if (!sharedGame) {
+        alert('Shared game not found');
+        return;
+    }
+    
+    // Get all schools and their teachers
+    let copiedCount = 0;
+    Object.values(allData.schools || {}).forEach(school => {
+        Object.keys(school.users || {}).forEach(username => {
+            const user = school.users[username];
+            // Only copy to teachers (users with email or marked as teacher)
+            if (user.email || state.userType === 'teacher') {
+                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const copiedGame = {
+                    ...sharedGame,
+                    shared: false, // Not shared by default when copied
+                    copiedFrom: setId,
+                    copiedAt: new Date().toISOString(),
+                    createdAt: new Date().toISOString()
+                };
+                
+                if (!allData.gameSets) allData.gameSets = {};
+                allData.gameSets[newSetId] = copiedGame;
+                copiedCount++;
+            }
+        });
+    });
+    
+    saveAllData(allData);
+    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
+    render();
+}
 
