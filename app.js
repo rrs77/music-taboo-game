@@ -86,9 +86,9 @@ function login() {
         const yearGroup = document.getElementById('year-group-input')?.value.trim();
         const email = document.getElementById('email-input')?.value.trim() || '';
         
-        // Validate username - warn if it looks like a full name
-        if (username && username.split(' ').length > 1) {
-            if (!confirm('⚠️ Warning: Your username looks like a full name. For safety, please use a nickname instead. Continue anyway?')) {
+        // Validate username - warn if it looks like a full name (only for pupils)
+        if (state.userType === 'pupil' && username && username.split(' ').length > 1) {
+            if (!confirm('⚠️ Warning: Please use only your first name, not your full name. Continue anyway?')) {
                 return;
             }
         }
@@ -98,7 +98,7 @@ function login() {
             return;
         }
         if (!username) {
-            showLoginError('Please enter a username (use a nickname, not your full name)');
+            showLoginError(state.userType === 'pupil' ? 'Please enter your first name' : 'Please enter a username');
             return;
         }
         
@@ -3543,15 +3543,15 @@ function copySharedGameToAll(setId) {
                     </div>
                     
                     <div class="mb-4">
-                        <label class="block text-sm font-bold mb-2 text-gray-700">Username (Use a nickname!) *</label>
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Username *</label>
                         <input 
                             id="username-input" 
                             type="text" 
-                            placeholder="Enter a nickname (not your full name)" 
+                            placeholder="${isPupil ? 'Enter your first name only' : 'Enter username'}" 
                             class="w-full px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none text-center text-lg"
                             onkeypress="if(event.key==='Enter') { const emailInput = document.getElementById('email-input'); if (emailInput && emailInput.style.display !== 'none') { emailInput.focus(); } else { login(); } }"
                         >
-                        <p class="text-xs text-amber-600 mt-1 font-semibold">⚠️ Use a nickname only - never your full name!</p>
+                        ${isPupil ? `<p class="text-xs text-amber-600 mt-1 font-semibold">⚠️ Use only your first name - never your full name!</p>` : ''}
                     </div>
                     
                     ${!isPupil ? `
@@ -3600,10 +3600,6 @@ function copySharedGameToAll(setId) {
                         </div>
                     </div>
                     
-                    <div class="mb-4 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
-                        <p class="font-semibold">🛡️ Safety Reminder:</p>
-                        <p>Always use a nickname, never your full name. Keep your personal information safe!</p>
-                    </div>
 
                     <div id="login-error-container"></div>
                     
