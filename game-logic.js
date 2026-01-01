@@ -413,17 +413,44 @@ async function loadDataFromFile() {
         }
     }
     
-    // Try to load from server (PHP or Node.js backend)
+    // Try to load from Netlify Function first
+    try {
+        const netlifyResponse = await fetch('/.netlify/functions/save-data');
+        if (netlifyResponse.ok) {
+            const fileData = await netlifyResponse.text();
+            if (fileData && fileData.trim() !== '') {
+                try {
+                    const parsed = JSON.parse(fileData);
+                    // Sync to localStorage as cache
+                    localStorage.setItem('tabooAllData', fileData);
+                    dataFileLoaded = true;
+                    console.log('✅ Data loaded from Netlify server');
+                    return parsed;
+                } catch (e) {
+                    console.error('Error parsing Netlify data:', e);
+                }
+            }
+        }
+    } catch (e) {
+        console.log('Netlify function not available, trying PHP:', e.message);
+    }
+    
+    // Try to load from server (PHP backend)
     try {
         const response = await fetch('save-data.php');
         if (response.ok) {
             const fileData = await response.text();
-            if (fileData) {
-                const parsed = JSON.parse(fileData);
-                // Sync to localStorage as cache
-                localStorage.setItem('tabooAllData', fileData);
-                dataFileLoaded = true;
-                return parsed;
+            if (fileData && fileData.trim() !== '') {
+                try {
+                    const parsed = JSON.parse(fileData);
+                    // Sync to localStorage as cache
+                    localStorage.setItem('tabooAllData', fileData);
+                    dataFileLoaded = true;
+                    console.log('✅ Data loaded from server');
+                    return parsed;
+                } catch (e) {
+                    console.error('Error parsing server data:', e);
+                }
             }
         }
     } catch (e) {
@@ -435,7 +462,7 @@ async function loadDataFromFile() {
 }
 
 function getAllData() {
-    // Try localStorage first (fastest)
+    // Try localStorage first (fastest - cached data)
     const data = localStorage.getItem('tabooAllData');
     if (data) {
         try {
@@ -452,6 +479,7 @@ function getAllData() {
     }
     
     // If no localStorage data, return empty structure with all required properties
+    // Note: Server data is loaded on startup via loadDataFromFile()
     return { users: {}, gameSets: {}, schools: {} };
 }
 
@@ -462,6 +490,29 @@ async function saveAllData(data) {
     localStorage.setItem('tabooAllData', dataStr);
     
     // ALWAYS save to server first (for Netlify/web hosting)
+    // Try Netlify Function first (if on Netlify)
+    try {
+        const netlifyResponse = await fetch('/.netlify/functions/save-data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: dataStr
+        });
+        
+        if (netlifyResponse.ok) {
+            const result = await netlifyResponse.json();
+            if (result.success) {
+                console.log('✅ Data saved to Netlify server');
+                return; // Success - data saved to Netlify
+            }
+        }
+    } catch (e) {
+        // Not on Netlify or Netlify function failed, try PHP
+        console.log('Netlify function not available, trying PHP:', e.message);
+    }
+    
+    // Try PHP backend (for traditional web hosting)
     try {
         const response = await fetch('save-data.php', {
             method: 'POST',
@@ -499,7 +550,7 @@ async function saveAllData(data) {
     }
     
     // Final fallback: localStorage only (will sync to server on next save)
-    console.log('💾 Data saved to localStorage (will sync to server on next connection)');
+    console.warn('⚠️ Data saved to localStorage only (will sync to server on next connection)');
 }
 
 // Load data from file on startup
