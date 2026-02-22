@@ -3170,66 +3170,455 @@ function render() {
                     <p class="text-gray-600 mb-6 text-center font-semibold">Choose how you want to sign in</p>
                     
                     <div class="space-y-3 mb-6">
-                        <button onclick="state.userType = 'pupil'; state.phase = 'login'; render();
-
-function deleteSharedGameConfirm(setId) {
-    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
-        const result = deleteSharedGame(setId);
-        if (result.success) {
-            alert('Shared game deleted successfully');
-            render();
-        } else {
-            alert('Error: ' + (result.error || 'Failed to delete game'));
-        }
-    }
-}
-
-function copySharedGameToAll(setId) {
-    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
-        return;
-    }
-    
-    const allData = getAllData();
-    const sharedGame = allData.sharedGames[setId];
-    if (!sharedGame) {
-        alert('Shared game not found');
-        return;
-    }
-    
-    // Get all schools and their teachers
-    let copiedCount = 0;
-    Object.values(allData.schools || {}).forEach(school => {
-        Object.keys(school.users || {}).forEach(username => {
-            const user = school.users[username];
-            // Only copy to teachers (users with email or marked as teacher)
-            if (user.email || state.userType === 'teacher') {
-                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                const copiedGame = {
-                    ...sharedGame,
-                    shared: false, // Not shared by default when copied
-                    copiedFrom: setId,
-                    copiedAt: new Date().toISOString(),
-                    createdAt: new Date().toISOString()
-                };
-                
-                if (!allData.gameSets) allData.gameSets = {};
-                allData.gameSets[newSetId] = copiedGame;
-                copiedCount++;
-            }
-        });
-    });
-    
-    saveAllData(allData);
-    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
-    render();
-}" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 text-lg flex items-center justify-center gap-3">
+                        <button onclick="state.userType = 'pupil'; state.phase = 'login'; render();" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 text-lg flex items-center justify-center gap-3">
                             <span class="text-2xl">👦👧</span>
                             <span>Pupil</span>
                         </button>
                         
-                        <button onclick="state.userType = 'teacher'; state.phase = 'login'; render();
+                        <button onclick="state.userType = 'teacher'; state.phase = 'login'; render();" class="w-full bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-700 text-lg flex items-center justify-center gap-3">
+                            <span class="text-2xl">👨‍🏫</span>
+                            <span>Teacher</span>
+                        </button>
+                        
+                        <button onclick="state.phase = 'super-admin-login'; render();" class="w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 text-lg flex items-center justify-center gap-3">
+                            <span class="text-2xl">🔐</span>
+                            <span>Admin</span>
+                        </button>
+                    </div>
+                    
+                    <div class="text-center">
+                        <p class="text-xs text-gray-500">Don't have a school code?</p>
+                        <button onclick="state.userType = 'teacher'; state.phase = 'create-school'; render();" class="text-indigo-600 hover:underline font-semibold text-sm">
+                            Create New School Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (state.phase === 'login') {
+        const isPupil = state.userType === 'pupil';
+        const isTeacher = state.userType === 'teacher';
+        
+        app.innerHTML = `
+            <div class="flex items-center justify-center min-h-screen px-4 bg-gradient-to-br from-indigo-600 to-purple-700">
+                <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
+                    <div class="flex items-center justify-between mb-4">
+                        <button onclick="state.phase = 'welcome'; render();" class="text-gray-600 hover:text-gray-800 text-sm font-semibold">← Back</button>
+                        <h1 class="text-4xl font-bold text-gray-800 text-center flex-1">🎵 Music Taboo</h1>
+                        <div class="w-16"></div>
+                    </div>
+                    
+                    <div class="mb-4 p-3 ${isPupil ? 'bg-blue-50 border-2 border-blue-200' : 'bg-green-50 border-2 border-green-200'} rounded-lg">
+                        <p class="text-xs ${isPupil ? 'text-blue-800' : 'text-green-800'} font-semibold mb-1">
+                            ${isPupil ? '👦👧 Pupil Login' : '👨‍🏫 Teacher Login'}
+                        </p>
+                        <p class="text-xs ${isPupil ? 'text-blue-700' : 'text-green-700'}">
+                            ${isPupil ? 'Enter your school code and a nickname. <strong>Never use your full name!</strong>' : 'Enter your school code and username. Email is optional but recommended for password recovery.'}
+                        </p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">School Code *</label>
+                        <input 
+                            id="school-code-input" 
+                            type="text" 
+                            placeholder="Enter school code (e.g., ABC123)" 
+                            class="w-full px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none text-center text-lg uppercase"
+                            onkeypress="if(event.key==='Enter') document.getElementById('username-input').focus()"
+                            autofocus
+                        >
+                        <p class="text-xs text-gray-500 mt-1">Don't have a code? <button onclick="state.phase = 'create-school'; render();" class="text-indigo-600 hover:underline font-semibold">Create New School Account</button></p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Username *</label>
+                        <input 
+                            id="username-input" 
+                            type="text" 
+                            placeholder="${isPupil ? 'Enter your first name only' : 'Enter username'}" 
+                            class="w-full px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none text-center text-lg"
+                            onkeypress="if(event.key==='Enter') { const emailInput = document.getElementById('email-input'); if (emailInput && emailInput.style.display !== 'none') { emailInput.focus(); } else { login(); } }"
+                        >
+                        ${isPupil ? `<p class="text-xs text-amber-600 mt-1 font-semibold">⚠️ Use only your first name - never your full name!</p>` : ''}
+                    </div>
+                    
+                    ${!isPupil ? `
+                    <div class="mb-4" id="email-field-container">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Email Address <span class="text-xs text-gray-500">(Optional - recommended)</span></label>
+                        <input 
+                            id="email-input" 
+                            type="email" 
+                            placeholder="Enter your email (optional)" 
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none text-center text-lg"
+                            onkeypress="if(event.key==='Enter') { const passwordInput = document.getElementById('password-input'); if (passwordInput && passwordInput.style.display !== 'none') { passwordInput.focus(); } else { login(); } }"
+                        >
+                        <p class="text-xs text-gray-500 mt-1">Recommended for password recovery and accessing the game portal.</p>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="mb-4" id="password-field-container" style="display: none;">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Password</label>
+                        <input 
+                            id="password-input" 
+                            type="password" 
+                            placeholder="Enter password (if set)" 
+                            class="w-full px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none text-center text-lg"
+                            onkeypress="if(event.key==='Enter') login()"
+                        >
+                    </div>
+                    
+                    <div class="mb-4 grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold mb-1 text-gray-700">Subject (optional)</label>
+                            <input 
+                                id="subject-input" 
+                                type="text" 
+                                placeholder="e.g., Music" 
+                                class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none text-sm"
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold mb-1 text-gray-700">Year Group (optional)</label>
+                            <input 
+                                id="year-group-input" 
+                                type="text" 
+                                placeholder="e.g., Year 6" 
+                                class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none text-sm"
+                            >
+                        </div>
+                    </div>
 
-function deleteSharedGameConfirm(setId) {
+                    <div id="login-error-container"></div>
+                    
+                    <button onclick="login()" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 text-lg mb-3">
+                        Sign In
+                    </button>
+                    
+                    ${isTeacher ? `
+                    <div class="flex gap-2 mt-3">
+                        <button onclick="state.phase = 'school-admin-login'; render();" class="flex-1 bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 text-sm">
+                            School Admin
+                        </button>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    } else if (state.phase === 'create-school') {
+        app.innerHTML = `
+            <div class="flex items-center justify-center min-h-screen px-4 bg-gradient-to-br from-indigo-600 to-purple-700">
+                <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4 text-center">Create New School</h2>
+                    
+                    <div class="mb-4 p-3 bg-green-50 border-2 border-green-200 rounded-lg">
+                        <p class="text-sm text-green-800 font-semibold mb-1">👨‍🏫 Creating a School Account</p>
+                        <p class="text-xs text-green-700">This is for teachers and administrators. You'll need an email address to create and manage your school account.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">School Name *</label>
+                        <input 
+                            id="school-name-input" 
+                            type="text" 
+                            placeholder="e.g., St. Mary's Primary" 
+                            class="w-full px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none"
+                            oninput="autoGenerateSchoolCode()"
+                            autofocus
+                        >
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">School Code *</label>
+                        <div class="flex gap-2">
+                            <input 
+                                id="new-school-code-input" 
+                                type="text" 
+                                placeholder="Auto-generated from school name" 
+                                class="flex-1 px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none uppercase bg-gray-50"
+                                maxlength="20"
+                                readonly
+                            >
+                            <button onclick="autoGenerateSchoolCode()" class="px-4 py-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 font-semibold" title="Regenerate code">
+                                🔄
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Code is auto-generated from school name. Share this code with your students so they can join.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Your Email Address *</label>
+                        <input 
+                            id="admin-email-input" 
+                            type="email" 
+                            placeholder="your.email@school.com" 
+                            class="w-full px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none"
+                        >
+                        <p class="text-xs text-gray-500 mt-1">Required for account recovery and password resets</p>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Admin Password *</label>
+                        <input 
+                            id="admin-password-input" 
+                            type="password" 
+                            placeholder="Create admin password" 
+                            class="w-full px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none"
+                        >
+                        <p class="text-xs text-gray-500 mt-1">Used to access school admin dashboard</p>
+                    </div>
+
+                    <div id="create-school-error-container"></div>
+                    
+                    <button onclick="createNewSchool()" class="w-full bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-700 text-lg mb-3">
+                        Create School Account
+                    </button>
+                    
+                    <button onclick="state.phase = 'login'; render();" class="w-full bg-gray-500 text-white font-bold py-3 rounded-xl hover:bg-gray-600 text-sm">
+                        Back to Login
+                    </button>
+                </div>
+            </div>
+        `;
+    } else if (state.phase === 'school-admin-login') {
+        app.innerHTML = `
+            <div class="flex items-center justify-center min-h-screen px-4 bg-gradient-to-br from-indigo-600 to-purple-700">
+                <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4 text-center">School Admin Login</h2>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">School Code *</label>
+                        <input 
+                            id="admin-school-code-input" 
+                            type="text" 
+                            placeholder="Enter school code" 
+                            class="w-full px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none text-center text-lg uppercase"
+                        >
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Admin Password *</label>
+                        <input 
+                            id="admin-password-login-input" 
+                            type="password" 
+                            placeholder="Enter admin password" 
+                            class="w-full px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none"
+                        >
+                    </div>
+
+                    <button onclick="loginAsSchoolAdmin()" class="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 text-lg mb-3">
+                        Login as Admin
+                    </button>
+                    
+                    <button onclick="state.phase = 'login'; render();" class="w-full bg-gray-500 text-white font-bold py-3 rounded-xl hover:bg-gray-600 text-sm">
+                        Back to Login
+                    </button>
+                </div>
+            </div>
+        `;
+    } else if (state.phase === 'super-admin-login') {
+        app.innerHTML = `
+            <div class="flex items-center justify-center min-h-screen px-4 bg-gradient-to-br from-red-600 to-orange-700">
+                <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4 text-center">🔐 Super Admin Login</h2>
+                    <p class="text-gray-600 mb-6 text-center text-sm">Access all schools and usage statistics</p>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Email Address *</label>
+                        <input 
+                            id="super-admin-email-input" 
+                            type="email" 
+                            placeholder="admin@example.com" 
+                            class="w-full px-4 py-3 border-2 border-red-400 rounded-lg focus:outline-none"
+                            autofocus
+                        >
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Password *</label>
+                        <input 
+                            id="super-admin-password-input" 
+                            type="password" 
+                            placeholder="Enter password" 
+                            class="w-full px-4 py-3 border-2 border-red-400 rounded-lg focus:outline-none"
+                            onkeypress="if(event.key==='Enter') loginAsSuperAdmin()"
+                        >
+                    </div>
+
+                    <button onclick="loginAsSuperAdmin()" class="w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 text-lg mb-3">
+                        Login as Super Admin
+                    </button>
+                    
+                    <button onclick="state.phase = 'welcome'; render();" class="w-full bg-gray-500 text-white font-bold py-3 rounded-xl hover:bg-gray-600 text-sm">
+                        Back
+                    </button>
+                </div>
+            </div>
+        `;
+    } else if (state.phase === 'super-admin-dashboard') {
+        const stats = getAllSchoolsStats();
+        app.innerHTML = `
+            <div class="min-h-screen p-4 md:p-8 bg-gradient-to-br from-gray-50 to-gray-100">
+                <div class="max-w-7xl mx-auto">
+                    <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 mb-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h1 class="text-4xl font-bold text-gray-800 mb-2">🔐 Super Admin Dashboard</h1>
+                                <p class="text-gray-600">Overview of all schools and usage statistics</p>
+                            </div>
+                            <button onclick="logout()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold">
+                                Logout
+                            </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
+                                <div class="text-3xl font-bold mb-1">${stats.totalSchools}</div>
+                                <div class="text-blue-100">Total Schools</div>
+                            </div>
+                            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
+                                <div class="text-3xl font-bold mb-1">${stats.totalUsers}</div>
+                                <div class="text-green-100">Total Users</div>
+                            </div>
+                            <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">
+                                <div class="text-3xl font-bold mb-1">${stats.totalGames}</div>
+                                <div class="text-purple-100">Total Games Played</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">📊 All Schools</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-4 py-3 font-bold text-gray-700">School Name</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Code</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Users</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Games</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Created</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Last Activity</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${stats.schools.map(school => `
+                                        <tr class="border-b hover:bg-gray-50">
+                                            <td class="px-4 py-3 font-semibold">${school.name}</td>
+                                            <td class="px-4 py-3 text-gray-600 font-mono text-sm">${school.code}</td>
+                                            <td class="px-4 py-3">${school.userCount}</td>
+                                            <td class="px-4 py-3">${school.gameCount}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-600">${new Date(school.createdAt).toLocaleDateString()}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-600">${school.lastActivity ? new Date(school.lastActivity).toLocaleDateString() : 'Never'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">👥 All Users</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Username</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Email</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">School</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Subject</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Year Group</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Games</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Joined</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${stats.allUsers.length > 0 ? stats.allUsers.map(user => `
+                                        <tr class="border-b hover:bg-gray-50">
+                                            <td class="px-4 py-3 font-semibold">${user.username}</td>
+                                            <td class="px-4 py-3 text-gray-600">${user.email || '<span class="text-gray-400 italic">No email</span>'}</td>
+                                            <td class="px-4 py-3">
+                                                <div class="text-sm">
+                                                    <div class="font-semibold">${user.schoolName}</div>
+                                                    <div class="text-gray-500 text-xs font-mono">${user.schoolCode}</div>
+                                                </div>
+                                            </td>
+                                            <td class="px-4 py-3">${user.subject || '-'}</td>
+                                            <td class="px-4 py-3">${user.yearGroup || '-'}</td>
+                                            <td class="px-4 py-3">${user.gamesPlayed}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-600">${user.joinedAt ? new Date(user.joinedAt).toLocaleDateString() : '-'}</td>
+                                            <td class="px-4 py-3">
+                                                <button onclick="openSuperAdminResetPasswordModal('${user.username}', '${user.schoolCode}', '${(user.email || '').replace(/'/g, "\\'")}', '${user.schoolName}')" 
+                                                        class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm">
+                                                    Reset Password
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `).join('') : '<tr><td colspan="8" class="px-4 py-8 text-center text-gray-500">No users found</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">🌐 All Shared Games</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Game Name</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Cards</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Created By</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">School</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Shared Date</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${Object.entries(getAllSharedGames()).map(([setId, gameSet]) => `
+                                        <tr class="border-b hover:bg-gray-50">
+                                            <td class="px-4 py-3 font-semibold">${gameSet.name}</td>
+                                            <td class="px-4 py-3">${gameSet.cards?.length || 0}</td>
+                                            <td class="px-4 py-3">${gameSet.sharedBy || 'Unknown'}</td>
+                                            <td class="px-4 py-3">${gameSet.sharedBySchool || '-'}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-600">${gameSet.sharedAt ? new Date(gameSet.sharedAt).toLocaleDateString() : '-'}</td>
+                                            <td class="px-4 py-3">
+                                                <div class="flex gap-2">
+                                                    <button onclick="copySharedGameToAll('${setId}')" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm">
+                                                        Copy to All
+                                                    </button>
+                                                    <button onclick="deleteSharedGameConfirm('${setId}')" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm">
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `).join('') || '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">No shared games</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">🕒 Recent Activity</h2>
+                        <div class="space-y-3">
+                            ${stats.recentActivity.length > 0 ? stats.recentActivity.map(activity => `
+                                <div class="border-l-4 border-indigo-500 pl-4 py-2 bg-gray-50 rounded">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <div class="font-semibold text-gray-800">${activity.schoolName} (${activity.schoolCode})</div>
+                                            <div class="text-sm text-gray-600">${activity.username} played "${activity.gameSet}"</div>
+                                        </div>
+                                        <div class="text-xs text-gray-500">${new Date(activity.date).toLocaleString()}</div>
+                                    </div>
+                                </div>
+                            `).join('') : '<p class="text-gray-500">No recent activity</p>'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (state.phase === 'menu') {
     if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
         const result = deleteSharedGame(setId);
         if (result.success) {
@@ -3411,59 +3800,7 @@ function copySharedGameToAll(setId) {
             <div class="flex items-center justify-center min-h-screen px-4 bg-gradient-to-br from-indigo-600 to-purple-700">
                 <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
                     <div class="flex items-center justify-between mb-4">
-                        <button onclick="state.phase = 'welcome'; render();
-
-function deleteSharedGameConfirm(setId) {
-    if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
-        const result = deleteSharedGame(setId);
-        if (result.success) {
-            alert('Shared game deleted successfully');
-            render();
-        } else {
-            alert('Error: ' + (result.error || 'Failed to delete game'));
-        }
-    }
-}
-
-function copySharedGameToAll(setId) {
-    if (!confirm('This will copy this game set to ALL teacher accounts. Continue?')) {
-        return;
-    }
-    
-    const allData = getAllData();
-    const sharedGame = allData.sharedGames[setId];
-    if (!sharedGame) {
-        alert('Shared game not found');
-        return;
-    }
-    
-    // Get all schools and their teachers
-    let copiedCount = 0;
-    Object.values(allData.schools || {}).forEach(school => {
-        Object.keys(school.users || {}).forEach(username => {
-            const user = school.users[username];
-            // Only copy to teachers (users with email or marked as teacher)
-            if (user.email || state.userType === 'teacher') {
-                const newSetId = 'set_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                const copiedGame = {
-                    ...sharedGame,
-                    shared: false, // Not shared by default when copied
-                    copiedFrom: setId,
-                    copiedAt: new Date().toISOString(),
-                    createdAt: new Date().toISOString()
-                };
-                
-                if (!allData.gameSets) allData.gameSets = {};
-                allData.gameSets[newSetId] = copiedGame;
-                copiedCount++;
-            }
-        });
-    });
-    
-    saveAllData(allData);
-    alert(`Game set copied to ${copiedCount} teacher accounts successfully!`);
-    render();
-}" class="text-gray-600 hover:text-gray-800 text-sm font-semibold">← Back</button>
+                        <button onclick="state.phase = 'welcome'; render();" class="text-gray-600 hover:text-gray-800 text-sm font-semibold">← Back</button>
                         <h1 class="text-4xl font-bold text-gray-800 text-center flex-1">🎵 Music Taboo</h1>
                         <div class="w-16"></div>
                     </div>
@@ -3487,9 +3824,386 @@ function copySharedGameToAll(setId) {
                             onkeypress="if(event.key==='Enter') document.getElementById('username-input').focus()"
                             autofocus
                         >
-                        <p class="text-xs text-gray-500 mt-1">Don't have a code? <button onclick="state.phase = 'create-school'; render();
+                        <p class="text-xs text-gray-500 mt-1">Don't have a code? <button onclick="state.phase = 'create-school'; render();" class="text-indigo-600 hover:underline font-semibold">Create New School Account</button></p>
+                    </div>
+                    
+                    ${!isPupil ? `
+                    <div class="mb-4" id="email-field-container">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Email Address <span class="text-xs text-gray-500">(Optional - recommended)</span></label>
+                        <input 
+                            id="email-input" 
+                            type="email" 
+                            placeholder="Enter your email (optional)" 
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none text-center text-lg"
+                            onkeypress="if(event.key==='Enter') { const passwordInput = document.getElementById('password-input'); if (passwordInput && passwordInput.style.display !== 'none') { passwordInput.focus(); } else { login(); } }"
+                        >
+                        <p class="text-xs text-gray-500 mt-1">Recommended for password recovery and accessing the game portal.</p>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="mb-4" id="password-field-container" style="display: none;">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Password</label>
+                        <input 
+                            id="password-input" 
+                            type="password" 
+                            placeholder="Enter password (if set)" 
+                            class="w-full px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none text-center text-lg"
+                            onkeypress="if(event.key==='Enter') login()"
+                        >
+                    </div>
+                    
+                    <div class="mb-4 grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold mb-1 text-gray-700">Subject (optional)</label>
+                            <input 
+                                id="subject-input" 
+                                type="text" 
+                                placeholder="e.g., Music" 
+                                class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none text-sm"
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold mb-1 text-gray-700">Year Group (optional)</label>
+                            <input 
+                                id="year-group-input" 
+                                type="text" 
+                                placeholder="e.g., Year 6" 
+                                class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none text-sm"
+                            >
+                        </div>
+                    </div>
 
-function deleteSharedGameConfirm(setId) {
+                    <div id="login-error-container"></div>
+                    
+                    <button onclick="login()" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl hover:bg-indigo-700 text-lg mb-3">
+                        Sign In
+                    </button>
+                    
+                    ${isTeacher ? `
+                    <div class="flex gap-2 mt-3">
+                        <button onclick="state.phase = 'school-admin-login'; render();" class="flex-1 bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 text-sm">
+                            School Admin
+                        </button>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    } else if (state.phase === 'create-school') {
+        app.innerHTML = `
+            <div class="flex items-center justify-center min-h-screen px-4 bg-gradient-to-br from-indigo-600 to-purple-700">
+                <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4 text-center">Create New School</h2>
+                    
+                    <div class="mb-4 p-3 bg-green-50 border-2 border-green-200 rounded-lg">
+                        <p class="text-sm text-green-800 font-semibold mb-1">👨‍🏫 Creating a School Account</p>
+                        <p class="text-xs text-green-700">This is for teachers and administrators. You'll need an email address to create and manage your school account.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">School Name *</label>
+                        <input 
+                            id="school-name-input" 
+                            type="text" 
+                            placeholder="e.g., St. Mary's Primary" 
+                            class="w-full px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none"
+                            oninput="autoGenerateSchoolCode()"
+                            autofocus
+                        >
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">School Code *</label>
+                        <div class="flex gap-2">
+                            <input 
+                                id="new-school-code-input" 
+                                type="text" 
+                                placeholder="Auto-generated from school name" 
+                                class="flex-1 px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none uppercase bg-gray-50"
+                                maxlength="20"
+                                readonly
+                            >
+                            <button onclick="autoGenerateSchoolCode()" class="px-4 py-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 font-semibold" title="Regenerate code">
+                                🔄
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Code is auto-generated from school name. Share this code with your students so they can join.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Your Email Address *</label>
+                        <input 
+                            id="admin-email-input" 
+                            type="email" 
+                            placeholder="your.email@school.com" 
+                            class="w-full px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none"
+                        >
+                        <p class="text-xs text-gray-500 mt-1">Required for account recovery and password resets</p>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Admin Password *</label>
+                        <input 
+                            id="admin-password-input" 
+                            type="password" 
+                            placeholder="Create admin password" 
+                            class="w-full px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none"
+                        >
+                        <p class="text-xs text-gray-500 mt-1">Used to access school admin dashboard</p>
+                    </div>
+
+                    <div id="create-school-error-container"></div>
+                    
+                    <button onclick="createNewSchool()" class="w-full bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-700 text-lg mb-3">
+                        Create School Account
+                    </button>
+                    
+                    <button onclick="state.phase = 'login'; render();" class="w-full bg-gray-500 text-white font-bold py-3 rounded-xl hover:bg-gray-600 text-sm">
+                        Back to Login
+                    </button>
+                </div>
+            </div>
+        `;
+    } else if (state.phase === 'school-admin-login') {
+        app.innerHTML = `
+            <div class="flex items-center justify-center min-h-screen px-4 bg-gradient-to-br from-indigo-600 to-purple-700">
+                <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4 text-center">School Admin Login</h2>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">School Code *</label>
+                        <input 
+                            id="admin-school-code-input" 
+                            type="text" 
+                            placeholder="Enter school code" 
+                            class="w-full px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none text-center text-lg uppercase"
+                        >
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Admin Password *</label>
+                        <input 
+                            id="admin-password-login-input" 
+                            type="password" 
+                            placeholder="Enter admin password" 
+                            class="w-full px-4 py-3 border-2 border-indigo-400 rounded-lg focus:outline-none"
+                        >
+                    </div>
+
+                    <button onclick="loginAsSchoolAdmin()" class="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 text-lg mb-3">
+                        Login as Admin
+                    </button>
+                    
+                    <button onclick="state.phase = 'login'; render();" class="w-full bg-gray-500 text-white font-bold py-3 rounded-xl hover:bg-gray-600 text-sm">
+                        Back to Login
+                    </button>
+                </div>
+            </div>
+        `;
+    } else if (state.phase === 'super-admin-login') {
+        app.innerHTML = `
+            <div class="flex items-center justify-center min-h-screen px-4 bg-gradient-to-br from-red-600 to-orange-700">
+                <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4 text-center">🔐 Super Admin Login</h2>
+                    <p class="text-gray-600 mb-6 text-center text-sm">Access all schools and usage statistics</p>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Email Address *</label>
+                        <input 
+                            id="super-admin-email-input" 
+                            type="email" 
+                            placeholder="admin@example.com" 
+                            class="w-full px-4 py-3 border-2 border-red-400 rounded-lg focus:outline-none"
+                            autofocus
+                        >
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-bold mb-2 text-gray-700">Password *</label>
+                        <input 
+                            id="super-admin-password-input" 
+                            type="password" 
+                            placeholder="Enter password" 
+                            class="w-full px-4 py-3 border-2 border-red-400 rounded-lg focus:outline-none"
+                            onkeypress="if(event.key==='Enter') loginAsSuperAdmin()"
+                        >
+                    </div>
+
+                    <button onclick="loginAsSuperAdmin()" class="w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 text-lg mb-3">
+                        Login as Super Admin
+                    </button>
+                    
+                    <button onclick="state.phase = 'welcome'; render();" class="w-full bg-gray-500 text-white font-bold py-3 rounded-xl hover:bg-gray-600 text-sm">
+                        Back
+                    </button>
+                </div>
+            </div>
+        `;
+    } else if (state.phase === 'super-admin-dashboard') {
+        const stats = getAllSchoolsStats();
+        app.innerHTML = `
+            <div class="min-h-screen p-4 md:p-8 bg-gradient-to-br from-gray-50 to-gray-100">
+                <div class="max-w-7xl mx-auto">
+                    <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 mb-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h1 class="text-4xl font-bold text-gray-800 mb-2">🔐 Super Admin Dashboard</h1>
+                                <p class="text-gray-600">Overview of all schools and usage statistics</p>
+                            </div>
+                            <button onclick="logout()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold">
+                                Logout
+                            </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
+                                <div class="text-3xl font-bold mb-1">${stats.totalSchools}</div>
+                                <div class="text-blue-100">Total Schools</div>
+                            </div>
+                            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
+                                <div class="text-3xl font-bold mb-1">${stats.totalUsers}</div>
+                                <div class="text-green-100">Total Users</div>
+                            </div>
+                            <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">
+                                <div class="text-3xl font-bold mb-1">${stats.totalGames}</div>
+                                <div class="text-purple-100">Total Games Played</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">📊 All Schools</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-4 py-3 font-bold text-gray-700">School Name</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Code</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Users</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Games</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Created</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Last Activity</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${stats.schools.map(school => `
+                                        <tr class="border-b hover:bg-gray-50">
+                                            <td class="px-4 py-3 font-semibold">${school.name}</td>
+                                            <td class="px-4 py-3 text-gray-600 font-mono text-sm">${school.code}</td>
+                                            <td class="px-4 py-3">${school.userCount}</td>
+                                            <td class="px-4 py-3">${school.gameCount}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-600">${new Date(school.createdAt).toLocaleDateString()}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-600">${school.lastActivity ? new Date(school.lastActivity).toLocaleDateString() : 'Never'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">👥 All Users</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Username</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Email</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">School</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Subject</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Year Group</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Games</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Joined</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${stats.allUsers.length > 0 ? stats.allUsers.map(user => `
+                                        <tr class="border-b hover:bg-gray-50">
+                                            <td class="px-4 py-3 font-semibold">${user.username}</td>
+                                            <td class="px-4 py-3 text-gray-600">${user.email || '<span class="text-gray-400 italic">No email</span>'}</td>
+                                            <td class="px-4 py-3">
+                                                <div class="text-sm">
+                                                    <div class="font-semibold">${user.schoolName}</div>
+                                                    <div class="text-gray-500 text-xs font-mono">${user.schoolCode}</div>
+                                                </div>
+                                            </td>
+                                            <td class="px-4 py-3">${user.subject || '-'}</td>
+                                            <td class="px-4 py-3">${user.yearGroup || '-'}</td>
+                                            <td class="px-4 py-3">${user.gamesPlayed}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-600">${user.joinedAt ? new Date(user.joinedAt).toLocaleDateString() : '-'}</td>
+                                            <td class="px-4 py-3">
+                                                <button onclick="openSuperAdminResetPasswordModal('${user.username}', '${user.schoolCode}', '${(user.email || '').replace(/'/g, "\\'")}', '${user.schoolName}')" 
+                                                        class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm">
+                                                    Reset Password
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `).join('') : '<tr><td colspan="8" class="px-4 py-8 text-center text-gray-500">No users found</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">🌐 All Shared Games</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Game Name</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Cards</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Created By</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">School</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Shared Date</th>
+                                        <th class="px-4 py-3 font-bold text-gray-700">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${Object.entries(getAllSharedGames()).map(([setId, gameSet]) => `
+                                        <tr class="border-b hover:bg-gray-50">
+                                            <td class="px-4 py-3 font-semibold">${gameSet.name}</td>
+                                            <td class="px-4 py-3">${gameSet.cards?.length || 0}</td>
+                                            <td class="px-4 py-3">${gameSet.sharedBy || 'Unknown'}</td>
+                                            <td class="px-4 py-3">${gameSet.sharedBySchool || '-'}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-600">${gameSet.sharedAt ? new Date(gameSet.sharedAt).toLocaleDateString() : '-'}</td>
+                                            <td class="px-4 py-3">
+                                                <div class="flex gap-2">
+                                                    <button onclick="copySharedGameToAll('${setId}')" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm">
+                                                        Copy to All
+                                                    </button>
+                                                    <button onclick="deleteSharedGameConfirm('${setId}')" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm">
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `).join('') || '<tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">No shared games</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">🕒 Recent Activity</h2>
+                        <div class="space-y-3">
+                            ${stats.recentActivity.length > 0 ? stats.recentActivity.map(activity => `
+                                <div class="border-l-4 border-indigo-500 pl-4 py-2 bg-gray-50 rounded">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <div class="font-semibold text-gray-800">${activity.schoolName} (${activity.schoolCode})</div>
+                                            <div class="text-sm text-gray-600">${activity.username} played "${activity.gameSet}"</div>
+                                        </div>
+                                        <div class="text-xs text-gray-500">${new Date(activity.date).toLocaleString()}</div>
+                                    </div>
+                                </div>
+                            `).join('') : '<p class="text-gray-500">No recent activity</p>'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (state.phase === 'menu') {
     if (confirm('Are you sure you want to delete this shared game? This will remove it from the portal for all teachers.')) {
         const result = deleteSharedGame(setId);
         if (result.success) {

@@ -10,3 +10,4 @@ taboo-auto-backup-*.json
 *.AppImage
 *.deb
 *.rpm
+*.bak
